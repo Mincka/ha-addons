@@ -1,5 +1,5 @@
 name: "Firefox"
-version: "1.0.1"
+version: "1.0.2"
 slug: "firefox"
 panel_icon: "mdi:firefox"
 description: "Docker container for Firefox"
@@ -10,6 +10,7 @@ arch:
   - armv7
   - i386
 init: false
+apparmor: false
 map:
   - share:rw
 ingress: true
