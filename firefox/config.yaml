@@ -23,4 +23,4 @@ environment:
 #devices:
 #  - /dev/snd
 #audio: true
-image: "ghcr.io/mincka/{arch}-firefox"
+image: "ghcr.io/mincka/firefox-{arch}"
