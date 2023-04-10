@@ -1,6 +1,4 @@
-# Home Assistant add-ons repository
-
-This repository can be used as a "blueprint" for add-on development to help you get started.
+# Mincka's Home Assistant Add-ons Repository
 
 ## Installation
 

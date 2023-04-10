@@ -1,5 +1,5 @@
 name: "Firefox"
-version: "1.0.2"
+version: "1.0.3"
 slug: "firefox"
 panel_icon: "mdi:firefox"
 description: "Docker container for Firefox"
@@ -23,4 +23,4 @@ environment:
 #devices:
 #  - /dev/snd
 #audio: true
-#image: "ghcr.io/mincka/{arch}-firefox"
+image: "ghcr.io/mincka/{arch}-firefox"
