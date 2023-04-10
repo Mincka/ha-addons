@@ -1,0 +1,5 @@
+labels:
+  org.opencontainers.image.title: "Firefox Home Assistant Add-on"
+  org.opencontainers.image.description: "Docker container for Firefox"
+  org.opencontainers.image.source: "https://github.com/mincka/ha-addons"
+  org.opencontainers.image.licenses: "MIT"

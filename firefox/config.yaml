@@ -1,0 +1,25 @@
+name: "Firefox"
+version: "1.0.1"
+slug: "firefox"
+panel_icon: "mdi:firefox"
+description: "Docker container for Firefox"
+url: "https://github.com/mincka/ha-addons/tree/main/firefox"
+arch:
+  - aarch64
+  - amd64
+  - armv7
+  - i386
+init: false
+map:
+  - share:rw
+ingress: true
+ingress_port: 5800
+environment:
+  # Required to write to /data
+  USER_ID: "0"
+  KEEP_APP_RUNNING: "1"
+# Sound support, not tested and requires special version of noVNC
+#devices:
+#  - /dev/snd
+#audio: true
+#image: "ghcr.io/mincka/{arch}-firefox"
