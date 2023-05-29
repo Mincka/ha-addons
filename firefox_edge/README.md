@@ -1,4 +1,4 @@
-# Home Assistant Add-on: Firefox
+# Home Assistant Add-on: Firefox (Edge)
 
 _Run Firefox as a browser inside Home Assistant to access local or external web sites from your home._
 
@@ -16,9 +16,12 @@ This add-on is based on the [docker image](https://github.com/jlesage/docker-fir
 A huge thank to him for the great containers created and maintained.
 He's the real hero who needs to be [supported](https://github.com/sponsors/jlesage).
 
-## Difference with the original container
+## Differences with the original container
 
-To make it compatible with Home Assistant persistence, I needed to remap folders and to do so, the startup script runs as `root`. I will try to avoid this in the future.
+There are a few differences that were either required for this container to work as an Add-on or just my own tweaks based on my preferences:
+
+- Edge version: this container is not based on Alpine **Stable** but Alpine **Edge**. The main reason was to benefit from the latest Firefox version available. During the startup, the container may show in the log an older version of Firefox, it can be ignored. It attempts to update Firefox each time the container starts.
+- To make it compatible with Home Assistant persistence, I needed to remap folders and to do so, the startup script runs as `root`. I will try to avoid this in the future.
 
 ## How to use
 
