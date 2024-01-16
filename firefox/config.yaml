@@ -1,5 +1,5 @@
 name: "Firefox"
-version: "1.0.7"
+version: "1.1.0"
 slug: "firefox"
 panel_icon: "mdi:firefox"
 description: "Docker container for Firefox"
@@ -11,10 +11,14 @@ arch:
   - i386
 init: false
 apparmor: false
+panel_admin: false
 map:
   - share:rw
 ingress: true
 ingress_port: 5800
+ports:
+  5800/tcp: null
+  5900/tcp: null
 environment:
   # Required to write to /data
   USER_ID: "0"
@@ -24,3 +28,37 @@ environment:
 #  - /dev/snd
 #audio: true
 image: "ghcr.io/mincka/firefox-{arch}"
+# To pass options as environment variables (thanks to legacy mode), they must be either "int" or "str" ("str?" will be ignored).
+legacy: true
+options:
+  VNC_PASSWORD: ""
+  ENABLE_CJK_FONT: "0"
+  FF_OPEN_URL: ""
+  FF_KIOSK: "0"
+  LANG: "en_US.UTF-8"
+  TZ: "Etc/UTC"
+  INSTALL_PACKAGES: ""
+  PACKAGES_MIRROR: ""  
+  CONTAINER_DEBUG: "0"
+  DISPLAY_WIDTH: "1920"
+  DISPLAY_HEIGHT: "1080"
+  DARK_MODE: "0"
+  SECURE_CONNECTION: "0"
+  SECURE_CONNECTION_VNC_METHOD: "SSL"
+  SECURE_CONNECTION_CERTS_CHECK_INTERVAL: "60"
+schema:
+  VNC_PASSWORD: str
+  ENABLE_CJK_FONT: str
+  FF_OPEN_URL: str
+  FF_KIOSK: str
+  LANG: str
+  TZ: str
+  INSTALL_PACKAGES: str
+  PACKAGES_MIRROR: str
+  CONTAINER_DEBUG: str
+  DISPLAY_WIDTH: str
+  DISPLAY_HEIGHT: str
+  DARK_MODE: str
+  SECURE_CONNECTION: str
+  SECURE_CONNECTION_VNC_METHOD: str
+  SECURE_CONNECTION_CERTS_CHECK_INTERVAL: str

@@ -1,4 +1,49 @@
 configuration:
-  message:
-    name: Message
-    description: The message that will be printed to the log when starting this example add-on.
+  VNC_PASSWORD:
+    name: VNC Password
+    description: Password needed to connect to the application's GUI. If you set a value, the only way to remove it will be to reinstall the add-on. Password is limited to 8 characters because due to a limitation of the Remote Framebuffer Protocol RFC (see section 7.2.2).
+  ENABLE_CJK_FONT:
+    name: Enable CJK font
+    description: When set to 1, open-source computer font WenQuanYi Zen Hei is installed. This font contains a large range of Chinese/Japanese/Korean characters.
+  FF_OPEN_URL:
+    name: Firefox Open URL
+    description: The URL to open when Firefox starts. If you set a value, the only way to remove it will be to reinstall the add-on.
+  FF_KIOSK:
+    name: Firefox Kiosk Mode
+    description: When set to 1, kiosk mode is enabled. This mode launches Firefox in a very restricted and limited mode best suitable for public areas or customer-facing displays.
+  LANG:
+    name: Locale
+    description: Set the locale, which defines the application's language, if supported. Format of the locale is language[_territory][.codeset], where language is an ISO 639 language code, territory is an ISO 3166 country code and codeset is a character set, like UTF-8. For example, Australian English using the UTF-8 encoding is en_AU.UTF-8.
+  TZ:
+    name: Timezone
+    description: TimeZone used by the container. Timezone can also be set by mapping /etc/localtime between the host and the container.
+  INSTALL_PACKAGES:
+    name: Install Packages
+    description: Space-separated list of packages to install during the startup of the container. List of available packages can be found at https://mirrors.alpinelinux.org. ATTENTION - Container functionality can be affected when installing a package that overrides existing container files (e.g. binaries).
+  PACKAGES_MIRROR:
+    name: Packages Mirror
+    description: Mirror of the repository to use when installing packages. List of mirrors is available at https://mirrors.alpinelinux.org.
+  CONTAINER_DEBUG:
+    name: Container Debug
+    description: When set to 1, debug logging is enabled. 
+  DISPLAY_WIDTH:
+    name: Display Width
+    description: Width (in pixels) of the application's window.
+  DISPLAY_HEIGHT:
+    name: Display Height
+    description: Height (in pixels) of the application's window.
+  DARK_MODE:
+    name: Firefox Dark Mode
+    description: When set to 1, dark mode is enabled for the application.
+  SECURE_CONNECTION:
+    name: Secure Connection
+    description: When set to 1, an encrypted connection is used to access the application's GUI (either via a web browser or VNC client). See the Security section of https://github.com/jlesage/docker-firefox for more details.
+  SECURE_CONNECTION_VNC_METHOD:
+    name: Secure Connection VNC Method
+    description: Method used to perform the secure VNC connection. Possible values are SSL or TLS. See the Security section of https://github.com/jlesage/docker-firefox for more details.
+  SECURE_CONNECTION_CERTS_CHECK_INTERVAL:
+    name: Secure Connection Certificate Check Interval
+    description: Interval, in seconds, at which the system verifies if web or VNC certificates have changed. When a change is detected, the affected services are automatically restarted. A value of 0 disables the check.
+network:
+  5800/tcp: Firefox via Web (Not required for Ingress)
+  5900/tcp: Firefox via VNC (Not required for Ingress)
