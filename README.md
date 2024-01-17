@@ -17,6 +17,36 @@ If you want to do add the repository manually, please follow the procedure highl
 
 _Run Firefox as a browser inside Home Assistant to access local or external web sites from your home._
 
+### [Firefox (Edge)](./firefox_edge)
+
+![Supports aarch64 Architecture][aarch64-shield]
+![Supports amd64 Architecture][amd64-shield]
+![Supports armv7 Architecture][armv7-shield]
+![Supports i386 Architecture][i386-shield]
+
+_Run Firefox as a browser inside Home Assistant to access local or external web sites from your home._
+
+This _Edge_ version updates to the latest Firefox version on container start.
+
+The startup speed of the Edge version's add-on tends to become progressively slower after each Firefox update, as it updates all installed packages, including Firefox, upon booting.
+
+The Edge version can also be unstable because the compatibility with the VNC add-on is not tested with the latest Firefox version.
+
+If you don’t need the very latest version of Firefox, it’s fine to stay on the standard version.
+
+## Support
+Got questions?
+
+You have several options to get them answered:
+
+- The Home Assistant [Community Forum](https://community.home-assistant.io/t/home-assistant-add-on-firefox/558672)
+- This repository issues list
+
+## Sponsoring ❤️
+If you like this add-on and would like to support my work, you can buy me a coffee. ☕
+
+Sponsoring available on GitHub (https://github.com/sponsors/Mincka) and Paypal (https://paypal.me/JulienEhrhart).
+
 <!--
 
 Notes to developers after forking or using the github template feature:

@@ -28,6 +28,11 @@ Just install, start the container and click on "Open Web UI". You can use "Show 
 
 The files downloaded in Firefox are automatically stored to your `/share/firefox` folder.
 
+## Uploads
+
+If you need to upload files through the Firefox add-on, you can use the [File editor add-on](https://github.com/home-assistant/addons/blob/master/configurator/) to upload the files to your `/share/firefox` folder.
+The files will be available in the `downloads` folder of the add-on. You can browse to this location when you select the files to upload.
+
 ## Import bookmarks
 
 You can import `bookmarks.html` file by dropping them in your `/share/firefox` folder and import the `bookmarks.html` file in Firefox.
