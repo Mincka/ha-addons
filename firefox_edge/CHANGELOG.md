@@ -4,7 +4,7 @@
 
 - Base image update: jlesage/docker-firefox to 23.11.3
 - Allow exposing VNC and Web ports on the Home Assistant host. This enables Kiosk scenarios with Kiosk mode and default URL options. 
-- Make the menu entry only available to all users (panel_admin: false).
+- Make the menu entry available to all users (panel_admin: false).
 - Enable the "legacy" mode to use options as environment variables. Few examples of available options below:
 - Option to set a VNC password.
 - Option to set a default URL.
