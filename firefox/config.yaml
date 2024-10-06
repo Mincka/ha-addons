@@ -1,5 +1,5 @@
 name: "Firefox"
-version: "1.2.0"
+version: "1.3.2"
 slug: "firefox"
 panel_icon: "mdi:firefox"
 description: "Docker container for Firefox"
@@ -19,14 +19,16 @@ ingress_port: 5800
 ports:
   5800/tcp: null
   5900/tcp: null
+  9222/tcp: null
 environment:
   # Required to write to /data
   USER_ID: "0"
   KEEP_APP_RUNNING: "1"
-# Sound support, not tested and requires special version of noVNC
-#devices:
-#  - /dev/snd
-#audio: true
+# Sound support (forward audio to your host), not tested
+devices:
+  - /dev/snd
+# Map a working PulseAudio setup into the container
+audio: true
 image: "ghcr.io/mincka/firefox-{arch}"
 # To pass options as environment variables (thanks to legacy mode), they must be either "int" or "str" ("str?" will be ignored).
 legacy: true
@@ -46,6 +48,11 @@ options:
   SECURE_CONNECTION: "0"
   SECURE_CONNECTION_VNC_METHOD: "SSL"
   SECURE_CONNECTION_CERTS_CHECK_INTERVAL: "60"
+  WEB_AUDIO: "1"
+  WEB_AUTHENTICATION: "0"
+  WEB_AUTHENTICATION_USERNAME: ""
+  WEB_AUTHENTICATION_PASSWORD: ""
+  FF_CUSTOM_ARGS: "0"
 schema:
   VNC_PASSWORD: str
   ENABLE_CJK_FONT: str
@@ -62,3 +69,8 @@ schema:
   SECURE_CONNECTION: str
   SECURE_CONNECTION_VNC_METHOD: str
   SECURE_CONNECTION_CERTS_CHECK_INTERVAL: str
+  WEB_AUDIO: str
+  WEB_AUTHENTICATION: str
+  WEB_AUTHENTICATION_USERNAME: str
+  WEB_AUTHENTICATION_PASSWORD: str
+  FF_CUSTOM_ARGS: str

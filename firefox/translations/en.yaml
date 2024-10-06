@@ -37,13 +37,29 @@ configuration:
     description: When set to 1, dark mode is enabled for the application.
   SECURE_CONNECTION:
     name: Secure Connection
-    description: When set to 1, an encrypted connection is used to access the application's GUI (either via a web browser or VNC client). See the Security section of https://github.com/jlesage/docker-firefox for more details.
+    description: When set to 1, an encrypted connection is used to access the application's GUI (either via a web browser or VNC client). This may not be compatible with HA Ingress (even in HTTPS). Note that few VNC clients support this method. SSVNC is one of them. See the Security section of https://github.com/jlesage/docker-firefox for more details.
   SECURE_CONNECTION_VNC_METHOD:
     name: Secure Connection VNC Method
     description: Method used to perform the secure VNC connection. Possible values are SSL or TLS. See the Security section of https://github.com/jlesage/docker-firefox for more details.
   SECURE_CONNECTION_CERTS_CHECK_INTERVAL:
     name: Secure Connection Certificate Check Interval
     description: Interval, in seconds, at which the system verifies if web or VNC certificates have changed. When a change is detected, the affected services are automatically restarted. A value of 0 disables the check.
+  FF_CUSTOM_ARGS:
+    name: Firefox Custom Arguments
+    description: Custom argument(s) to pass when launching Firefox.
+  WEB_AUDIO:
+    name: Web Audio
+    description: When set to 1, audio support is enabled, meaning that any audio produced by the application is played through the browser. Don't forget to also enable audio in the VNC docked console. Note that audio is not supported for VNC clients, nor HA Ingress. Please tell me if you find a way to make it work through HA ingress.
+  WEB_AUTHENTICATION:
+    name: Web Authentication
+    description: When set to 1, the application' GUI is protected via a login page when accessed via a web browser. Access is allowed only when providing valid credentials. This feature requires secure connection (SECURE_CONNECTION environment variable) to be enabled. This may not be compatible with HA ingress (even in HTTPS).
+  WEB_AUTHENTICATION_USERNAME:
+    name: Web Authentication Username
+    description: Optional username to configure for the web authentication. This is a quick and easy way to configure credentials for a single user.
+  WEB_AUTHENTICATION_PASSWORD:
+    name: Web Authentication Password
+    description: Optional password to configure for the web authentication. This is a quick and easy way to configure credentials for a single user.
 network:
   5800/tcp: Firefox via Web (Not required for Ingress)
   5900/tcp: Firefox via VNC (Not required for Ingress)
+  9222/tcp: Firefox Remote Debugging Port (Not required for Ingress)

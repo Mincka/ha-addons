@@ -1,5 +1,14 @@
 <!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 
+## 1.3.2
+
+- Base image update: jlesage/docker-firefox to 24.09.1 (Firefox 130.0.1-r0)
+- Option to enable audio support through web browser (when you expose the addon with a dedicated web port). Not working with Ingress.
+- HA Addon Audio support enabled for the host (not tested).
+- Remote Debugging Port added.
+- Option to enable Web authentication support.
+- Option to set custom arguments for Firefox.
+
 ## 1.2.0
 
 - Base image update: jlesage/docker-firefox to 24.04.1 (Firefox 124.0.1-r0)
