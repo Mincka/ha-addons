@@ -1,5 +1,14 @@
 <!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 
+## 1.4.0
+
+- Base image update: jlesage/docker-firefox to 24.12.1 (Firefox 133.0-r0)
+- Changes from jlesage's baseimage:
+  - Fixed web audio feature with URL path-based reverse proxy.
+  - Fixed TLS secure connection method for VNC that was preventing web access.
+  - Fixed CJK font installation.
+  - Rebuild against latest distro images to get security fixes.
+
 ## 1.3.2
 
 - Base image update: jlesage/docker-firefox to 24.09.1 (Firefox 130.0.1-r0)

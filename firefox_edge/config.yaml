@@ -1,5 +1,5 @@
 name: "Firefox (Edge)"
-version: "1.3.2"
+version: "1.4.0"
 slug: "firefox_edge"
 panel_icon: "mdi:firefox"
 description: "Docker container for Firefox. Update to the latest Firefox version on container start."

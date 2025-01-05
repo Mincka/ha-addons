@@ -1,5 +1,5 @@
 name: "Firefox"
-version: "1.3.2"
+version: "1.4.0"
 slug: "firefox"
 panel_icon: "mdi:firefox"
 description: "Docker container for Firefox"
