@@ -1,5 +1,9 @@
 <!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 
+## 1.5.0
+
+- Base image update: jlesage/docker-firefox to 25.03.1 (Firefox 136.0-r0)
+
 ## 1.4.0
 
 - Base image update: jlesage/docker-firefox to 24.12.1 (Firefox 133.0-r0)

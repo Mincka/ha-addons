@@ -1,4 +1,4 @@
-FROM jlesage/firefox:v24.12.1
+FROM jlesage/firefox:v25.03.1
 
 COPY rootfs/startapp.sh /startapp.sh
 # Makes sure that the line endings are correct
