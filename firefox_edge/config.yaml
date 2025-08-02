@@ -1,5 +1,5 @@
 name: "Firefox (Edge)"
-version: "1.5.0"
+version: "1.6.0"
 slug: "firefox_edge"
 panel_icon: "mdi:firefox"
 description: "Docker container for Firefox. Update to the latest Firefox version on container start."
@@ -52,7 +52,8 @@ options:
   WEB_AUTHENTICATION: "0"
   WEB_AUTHENTICATION_USERNAME: ""
   WEB_AUTHENTICATION_PASSWORD: ""
-  FF_CUSTOM_ARGS: "0"  
+  FF_CUSTOM_ARGS: "0"
+  WEB_FILE_MANAGER: "0"  
 schema:
   VNC_PASSWORD: str
   ENABLE_CJK_FONT: str
@@ -74,3 +75,4 @@ schema:
   WEB_AUTHENTICATION_USERNAME: str
   WEB_AUTHENTICATION_PASSWORD: str
   FF_CUSTOM_ARGS: str  
+  WEB_FILE_MANAGER: str

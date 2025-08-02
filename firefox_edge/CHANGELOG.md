@@ -1,5 +1,13 @@
 <!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 
+## 1.6.0
+
+- Base image update: jlesage/docker-firefox to 25.07.2 (Firefox 114.0.4-r1)
+  - Added automatic reconnect support of the web interface.
+  - Added web file manager (https://github.com/jlesage/docker-baseimage-gui?tab=readme-ov-file#web-file-manager).
+  - Do not ask VNC password when accessing the web interface and web authentication is enabled.
+  - Misc updates and bug fixes
+
 ## 1.5.0
 
 - Base image update: jlesage/docker-firefox to 25.03.1 (Firefox 136.0-r0)
