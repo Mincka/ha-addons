@@ -8,7 +8,6 @@ arch:
   - aarch64
   - amd64
   - armv7
-  - i386
 init: false
 apparmor: false
 panel_admin: false
