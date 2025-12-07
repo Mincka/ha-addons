@@ -1,5 +1,16 @@
 <!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 
+## 1.7.0
+
+- Base image update: jlesage/docker-firefox to 25.12.1
+- Updated baseimage to version 4.10.1, which brings the following changes:
+  - Added hardware acceleration support for the X server.
+  - Added seamless clipboard synchronization for Chromium-based browsers. HA Add-on: Sadly, this does not seem to work as HA add-on with ingress, even if the add-on iframe is directly loaded over HTTPS.
+  - Added web notification service to forward desktop notifications to the browser. HA Add-on: Not tested, may not work as HA add-on with ingress.
+  - Added the ability to restrict web and VNC connections from localhost only.
+  - Added web server support for TLS 1.3.
+  - Removed web server support of static Diffie-Hellman parameters file (no longer needed in modern TLS configurations and ECDHE).
+
 ## 1.6.0
 
 - Base image update: jlesage/docker-firefox to 25.07.2 (Firefox 114.0.4-r1)
