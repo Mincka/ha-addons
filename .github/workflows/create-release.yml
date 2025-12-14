@@ -1,0 +1,87 @@
+name: Create Release on Upstream Update
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.upstream-version'
+
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get version info
+        id: version
+        run: |
+          # Get upstream version
+          UPSTREAM_VERSION=$(cat .upstream-version)
+          echo "upstream_version=$UPSTREAM_VERSION" >> $GITHUB_OUTPUT
+          
+          # Get addon version from config.yaml (handle various formats)
+          ADDON_VERSION=$(grep -E '^[[:space:]]*version:' firefox/config.yaml | head -n1 | sed 's/.*version:[[:space:]]*["'\'']*\([^"'\'']*\)["'\'']*/\1/' | tr -d ' ')
+          echo "addon_version=$ADDON_VERSION" >> $GITHUB_OUTPUT
+          
+          echo "Upstream version: $UPSTREAM_VERSION"
+          echo "Addon version: $ADDON_VERSION"
+
+      - name: Check if release already exists
+        id: check_release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ADDON_VERSION="${{ steps.version.outputs.addon_version }}"
+          
+          if gh release view "$ADDON_VERSION" > /dev/null 2>&1; then
+            echo "Release $ADDON_VERSION already exists"
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "Release $ADDON_VERSION does not exist"
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Generate Release Notes
+        if: steps.check_release.outputs.exists != 'true'
+        id: notes
+        run: |
+          UPSTREAM_VERSION="${{ steps.version.outputs.upstream_version }}"
+          ADDON_VERSION="${{ steps.version.outputs.addon_version }}"
+          
+          # Get the latest changelog entry
+          CHANGELOG_ENTRY=$(awk '/^## \['"$ADDON_VERSION"'\]/{flag=1; next} /^## \[/{flag=0} flag' firefox/CHANGELOG.md)
+          
+          # Create release notes
+          cat << EOF > release_notes.md
+          ## Firefox Add-on v$ADDON_VERSION
+          
+          Base image update: jlesage/docker-firefox to $UPSTREAM_VERSION
+          
+          ### Changes
+          
+          $CHANGELOG_ENTRY
+          
+          ### Links
+          
+          - [Upstream Release Notes](https://github.com/jlesage/docker-firefox/releases/tag/$UPSTREAM_VERSION)
+          EOF
+          
+          echo "Release notes generated"
+
+      - name: Create GitHub Release
+        if: steps.check_release.outputs.exists != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ADDON_VERSION="${{ steps.version.outputs.addon_version }}"
+          
+          gh release create "$ADDON_VERSION" \
+            --title "v$ADDON_VERSION" \
+            --notes-file release_notes.md
+          
+          echo "✅ Created release $ADDON_VERSION"
