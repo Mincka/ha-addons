@@ -5,12 +5,18 @@ on:
     - cron: '0 6 * * *'  # Daily at 6 AM UTC
   workflow_dispatch:      # Manual trigger
 
+# Prevent concurrent runs
+concurrency:
+  group: upstream-firefox-check
+  cancel-in-progress: false
+
 jobs:
   check-upstream:
     runs-on: ubuntu-latest
     outputs:
       should_update: ${{ steps.check.outputs.should_update }}
       latest_tag: ${{ steps.check.outputs.latest_tag }}
+      branch_name: ${{ steps.check.outputs.branch_name }}
     steps:
       - uses: actions/checkout@v4
 
@@ -23,11 +29,14 @@ jobs:
           LATEST_TAG=$(gh api repos/jlesage/docker-firefox/releases/latest --jq '.tag_name')
           echo "Latest upstream: $LATEST_TAG"
           
+          BRANCH_NAME="update-upstream-$LATEST_TAG"
+          
+          echo "latest_tag=$LATEST_TAG" >> $GITHUB_OUTPUT
+          echo "branch_name=$BRANCH_NAME" >> $GITHUB_OUTPUT
+          
           # Check tracked version
           TRACKED=$(cat .upstream-version 2>/dev/null || echo "none")
           echo "Currently tracking: $TRACKED"
-          
-          echo "latest_tag=$LATEST_TAG" >> $GITHUB_OUTPUT
           
           if [ "$LATEST_TAG" != "$TRACKED" ]; then
             echo "🆕 New release detected!"
@@ -57,9 +66,18 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          VERSION="${{ needs.check-upstream.outputs.latest_tag }}"
-          EXISTING=$(gh pr list --search "docker-firefox $VERSION" --state open --json number --jq '.[0].number // empty')
-          echo "skip=$( [ -n "$EXISTING" ] && echo true || echo false )" >> $GITHUB_OUTPUT
+          BRANCH_NAME="${{ needs.check-upstream.outputs.branch_name }}"
+          
+          # Search by branch name (deterministic)
+          EXISTING=$(gh pr list --head "$BRANCH_NAME" --state open --json number --jq '.[0].number // empty')
+          
+          if [ -n "$EXISTING" ]; then
+            echo "PR #$EXISTING already exists for branch $BRANCH_NAME"
+            echo "skip=true" >> $GITHUB_OUTPUT
+          else
+            echo "No existing PR found for branch $BRANCH_NAME"
+            echo "skip=false" >> $GITHUB_OUTPUT
+          fi
 
       - name: Setup Git
         if: steps.pr_check.outputs.skip != 'true'
@@ -70,9 +88,9 @@ jobs:
       - name: Create branch
         if: steps.pr_check.outputs.skip != 'true'
         run: |
-          VERSION="${{ needs.check-upstream.outputs.latest_tag }}"
-          git checkout -b "update-upstream-$VERSION"
-          echo "BRANCH=update-upstream-$VERSION" >> $GITHUB_ENV
+          BRANCH_NAME="${{ needs.check-upstream.outputs.branch_name }}"
+          git checkout -b "$BRANCH_NAME"
+          echo "BRANCH=$BRANCH_NAME" >> $GITHUB_ENV
 
       - name: Run Claude to update addon
         if: steps.pr_check.outputs.skip != 'true'
@@ -130,6 +148,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           VERSION="${{ needs.check-upstream.outputs.latest_tag }}"
+          BRANCH_NAME="${{ needs.check-upstream.outputs.branch_name }}"
           
           if [ -z "$(git status --porcelain)" ]; then
             echo "No changes detected"
@@ -144,16 +163,18 @@ jobs:
           
           # Set up authenticated remote URL
           git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git"
-          git push origin "$BRANCH"
+          git push origin "$BRANCH_NAME"
 
       - name: Create Pull Request
+        id: create_pr
         if: steps.pr_check.outputs.skip != 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           VERSION="${{ needs.check-upstream.outputs.latest_tag }}"
+          BRANCH_NAME="${{ needs.check-upstream.outputs.branch_name }}"
           
-          gh pr create \
+          PR_URL=$(gh pr create \
             --title "🔄 Update to jlesage/docker-firefox $VERSION" \
             --body "## Automated Upstream Sync
 
@@ -161,101 +182,20 @@ jobs:
 
           This PR updates the Firefox Home Assistant add-on to use the latest upstream Docker image.
 
-          ⏳ *Release notes are being generated...*
+          ### Checklist
+          - [ ] Review the changes in \`firefox/\` folder
+          - [ ] Check CHANGELOG.md entry
+          - [ ] Verify new environment variables (if any)
 
           ---
           *Created automatically by Claude Code*" \
-            --base main
-
-      - name: Generate Release Notes
-        if: steps.pr_check.outputs.skip != 'true'
-        id: release_notes
-        uses: anthropics/claude-code-action@v1
-        with:
-          prompt: |
-            Please prepare release notes for this Home Assistant add-on update.
-            
-            ## Context
-            - Upstream project: jlesage/docker-firefox
-            - New upstream version: ${{ needs.check-upstream.outputs.latest_tag }}
-            - Upstream release: https://github.com/jlesage/docker-firefox/releases/tag/${{ needs.check-upstream.outputs.latest_tag }}
-            
-            ## Task
-            
-            1. Fetch the upstream release notes from: https://api.github.com/repos/jlesage/docker-firefox/releases/tags/${{ needs.check-upstream.outputs.latest_tag }}
-            
-            2. Read the firefox/CHANGELOG.md to see what changes were made in this update
-            
-            3. Create a file called RELEASE_NOTES.md in the repository root with the following structure:
-            
-            ```markdown
-            ## What's Changed
-            
-            - Base image update: jlesage/docker-firefox to ${{ needs.check-upstream.outputs.latest_tag }}
-            - [List any new environment variables or features added]
-            
-            ## Upstream Changes
-            
-            [Summarize the key changes from upstream release notes that are relevant to users]
-            
-            ## Links
-            
-            - [Upstream Release Notes](https://github.com/jlesage/docker-firefox/releases/tag/${{ needs.check-upstream.outputs.latest_tag }})
-            ```
-            
-            4. Keep it concise and user-friendly
-            5. Focus on changes that affect Home Assistant users
-            6. Do NOT commit the file, just create it locally
-
-          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Update PR with Release Notes
-        if: steps.pr_check.outputs.skip != 'true'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          VERSION="${{ needs.check-upstream.outputs.latest_tag }}"
+            --base main \
+            --head "$BRANCH_NAME")
           
-          if [ -f "RELEASE_NOTES.md" ]; then
-            RELEASE_NOTES=$(cat RELEASE_NOTES.md)
-          else
-            RELEASE_NOTES="*Release notes could not be generated*"
-          fi
-          
-          # Update PR description with release notes
-          gh pr edit "$BRANCH" --body "## Automated Upstream Sync
+          # Extract PR number from URL
+          PR_NUMBER=$(echo "$PR_URL" | grep -oE '[0-9]+$')
+          echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
+          echo "Created PR #$PR_NUMBER"
 
-          **New upstream release:** [\`$VERSION\`](https://github.com/jlesage/docker-firefox/releases/tag/$VERSION)
-
-          This PR updates the Firefox Home Assistant add-on to use the latest upstream Docker image.
-
-          ---
-
-          $RELEASE_NOTES
-
-          ---
-          *Created automatically by Claude Code*"
-
-      - name: Create Draft GitHub Release
-        if: steps.pr_check.outputs.skip != 'true'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          VERSION="${{ needs.check-upstream.outputs.latest_tag }}"
-          
-          # Read addon version from config.yaml
-          ADDON_VERSION=$(grep -E '^version:' firefox/config.yaml | sed 's/version: *["'\'']*\([^"'\'']*\)["'\'']*/\1/' | tr -d ' ')
-          
-          if [ -f "RELEASE_NOTES.md" ]; then
-            RELEASE_NOTES=$(cat RELEASE_NOTES.md)
-          else
-            RELEASE_NOTES="Base image update: jlesage/docker-firefox to $VERSION"
-          fi
-          
-          # Create draft release
-          gh release create "$ADDON_VERSION" \
-            --draft \
-            --title "v$ADDON_VERSION" \
-            --notes "$RELEASE_NOTES" \
-            || echo "Draft release may already exist or failed to create"
+  # Note: Release creation happens after PR merge via create-release.yml
+  # Release notes are generated from CHANGELOG.md which Claude already updated
