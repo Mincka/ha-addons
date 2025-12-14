@@ -81,16 +81,45 @@ jobs:
           prompt: |
             A new version of jlesage/docker-firefox has been released: ${{ needs.check-upstream.outputs.latest_tag }}
             
-            Please update this Home Assistant add-on to use the new upstream version:
+            Please update this Home Assistant add-on to use the new upstream version.
+            
+            ## Step 1: Check upstream changes
+            
+            First, fetch and review the upstream README to check for any new environment variables:
+            - Fetch https://raw.githubusercontent.com/jlesage/docker-firefox/master/README.md
+            - Look at the "Environment Variables" section
+            - Compare with the current environment variables in firefox/DOCS.md and firefox/config.yaml
+            
+            ## Step 2: Update files
             
             1. **firefox/build.yaml**: Update the build_from image tags to use ${{ needs.check-upstream.outputs.latest_tag }}
-            2. **firefox/config.yaml**: Bump the addon version appropriately
-            3. **firefox/CHANGELOG.md**: Add a new entry documenting the upstream update
-            4. **.upstream-version**: Update to ${{ needs.check-upstream.outputs.latest_tag }}
-            5. Check **firefox_edge/** folder for similar updates if needed
             
-            Look at the existing file formats and follow the same patterns.
-            Provide a summary of what was changed.
+            2. **firefox/config.yaml**: 
+               - Bump the addon version appropriately
+               - If there are NEW environment variables in upstream that are not yet in the addon, add them to the `schema` and `options` sections following the existing pattern
+            
+            3. **firefox/DOCS.md**:
+               - If there are NEW environment variables, add them to the Configuration section following the existing table format and descriptions
+            
+            4. **firefox/translations/en.yaml** (and other translation files in firefox/translations/):
+               - If there are NEW environment variables, add their name and description translations following the existing pattern
+               - Check the structure of existing entries and replicate it for new variables
+            
+            5. **firefox/CHANGELOG.md**: 
+               - Add a new entry documenting the upstream update
+               - If new environment variables were added, mention them in the changelog
+            
+            6. **.upstream-version**: Update to ${{ needs.check-upstream.outputs.latest_tag }}
+            
+            7. Check **firefox_edge/** folder for similar updates if needed (build.yaml, config.yaml, translations/, DOCS.md, CHANGELOG.md)
+            
+            ## Important
+            
+            - Look at the git history and existing file formats to follow the same patterns
+            - For new environment variables, follow the naming convention and structure used in previous commits
+            - Only add environment variables that make sense for Home Assistant users
+            - Make sure translations are consistent across all translation files
+            - Provide a summary of what was changed, especially if new environment variables were added
 
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
