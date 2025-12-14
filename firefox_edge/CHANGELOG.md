@@ -1,5 +1,13 @@
 <!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 
+## 1.8.0
+
+- Base image update: jlesage/docker-firefox to v25.12.3 (Firefox 145.0-r0)
+- Baseimage updated to version 4.10.3:
+  - Fixed desktop notification forwarding service issues related to clients and WebSocket management.
+  - Use Firefox native notification backend when web notification support is disabled.
+- Clipboard synchronization now works with HA Ingress (copy/paste between host and Firefox).
+
 ## 1.7.0
 
 - Base image update: jlesage/docker-firefox to 25.12.1
