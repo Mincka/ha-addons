@@ -21,11 +21,22 @@ jobs:
       changed: ${{ steps.changed_addons.outputs.changed }}
     steps:
       - name: Check out the repository
-        uses: actions/checkout@v6.0.1
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Nécessaire pour git diff
 
       - name: Get changed files
         id: changed_files
-        uses: jitterbit/get-changed-files@v1
+        run: |
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            # Pour les PRs: compare la base avec le head
+            FILES=$(git diff --name-only origin/${{ github.base_ref }}...HEAD | tr '\n' ' ')
+          else
+            # Pour les push: compare avec le commit précédent
+            FILES=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | tr '\n' ' ')
+          fi
+          echo "all=$FILES" >> $GITHUB_OUTPUT
+          echo "Changed files: $FILES"
 
       - name: Find add-on directories
         id: addons
@@ -56,6 +67,7 @@ jobs:
           else
             echo "No add-on had any monitored files changed (${{ env.MONITORED_FILES }})";
           fi
+
   build:
     needs: init
     runs-on: ubuntu-latest
@@ -68,7 +80,7 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v6.0.1
+        uses: actions/checkout@v4
 
       - name: Get information
         id: info
