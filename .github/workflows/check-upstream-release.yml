@@ -50,6 +50,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          persist-credentials: true
 
       - name: Check if PR already exists
         id: pr_check
@@ -59,6 +60,12 @@ jobs:
           VERSION="${{ needs.check-upstream.outputs.latest_tag }}"
           EXISTING=$(gh pr list --search "docker-firefox $VERSION" --state open --json number --jq '.[0].number // empty')
           echo "skip=$( [ -n "$EXISTING" ] && echo true || echo false )" >> $GITHUB_OUTPUT
+
+      - name: Setup Git
+        if: steps.pr_check.outputs.skip != 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
 
       - name: Create branch
         if: steps.pr_check.outputs.skip != 'true'
@@ -86,13 +93,12 @@ jobs:
             Provide a summary of what was changed.
 
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          
-          allowed_tools: "Edit,Write,Read,Bash(git status),Bash(git diff),Bash(cat *)"
+          github_token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Create Pull Request
+      - name: Commit and Push changes
         if: steps.pr_check.outputs.skip != 'true'
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           VERSION="${{ needs.check-upstream.outputs.latest_tag }}"
           
@@ -101,12 +107,22 @@ jobs:
             exit 0
           fi
           
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
+          # Remove any output.txt that Claude might have created
+          rm -f output.txt
           
           git add -A
           git commit -m "chore: update to upstream docker-firefox $VERSION"
+          
+          # Set up authenticated remote URL
+          git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git"
           git push origin "$BRANCH"
+
+      - name: Create Pull Request
+        if: steps.pr_check.outputs.skip != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION="${{ needs.check-upstream.outputs.latest_tag }}"
           
           gh pr create \
             --title "🔄 Update to jlesage/docker-firefox $VERSION" \
