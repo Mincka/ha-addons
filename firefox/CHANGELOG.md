@@ -1,5 +1,9 @@
 <!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 
+## 1.8.1
+
+- Fix FF_CUSTOM_ARGS default value from "0" to empty string.
+
 ## 1.8.0
 
 - Base image update: jlesage/docker-firefox to v25.12.3 (Firefox 145.0-r0)
