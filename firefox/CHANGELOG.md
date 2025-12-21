@@ -1,5 +1,13 @@
 <!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 
+## 1.9.0
+
+- Base image update: jlesage/docker-firefox to v25.12.4 (Firefox 145.0.1-r0)
+- Added new environment variables:
+  - WEB_FILE_MANAGER_ALLOWED_PATHS: Configure paths accessible through the web file manager
+  - WEB_FILE_MANAGER_DENIED_PATHS: Configure paths blocked from web file manager access
+  - WEB_AUTHENTICATION_TOKEN_VALIDITY_TIME: Configure authentication token lifetime (in hours)
+
 ## 1.8.1
 
 - Fix FF_CUSTOM_ARGS default value from "0" to empty string.
