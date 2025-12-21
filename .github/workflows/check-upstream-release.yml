@@ -96,17 +96,8 @@ jobs:
         if: steps.pr_check.outputs.skip != 'true'
         uses: anthropics/claude-code-action@v1
         with:
-          allowed_tools: >-
-            Read,
-            Edit,
-            Write,
-            Glob,
-            Grep,
-            WebFetch,
-            Bash(curl:*),
-            Bash(wget:*),
-            Bash(python3:*),
-            Bash(git:*)
+          claude_args: |
+            --allowedTools "Read,Edit,Write,Glob,Grep,WebFetch,Bash"
           prompt: |
             A new version of jlesage/docker-firefox has been released: ${{ needs.check-upstream.outputs.latest_tag }}
 
