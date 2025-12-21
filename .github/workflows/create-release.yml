@@ -54,7 +54,7 @@ jobs:
           ADDON_VERSION="${{ steps.version.outputs.addon_version }}"
           
           # Get the latest changelog entry
-          CHANGELOG_ENTRY=$(awk '/^## \['"$ADDON_VERSION"'\]/{flag=1; next} /^## \[/{flag=0} flag' firefox/CHANGELOG.md)
+          CHANGELOG_ENTRY=$(awk '/^## '"$ADDON_VERSION"'$/{flag=1; next} /^## [0-9]/{flag=0} flag' firefox/CHANGELOG.md)
           
           # Create release notes
           cat << EOF > release_notes.md
