@@ -52,25 +52,28 @@ jobs:
         run: |
           UPSTREAM_VERSION="${{ steps.version.outputs.upstream_version }}"
           ADDON_VERSION="${{ steps.version.outputs.addon_version }}"
-          
+
           # Get the latest changelog entry
           CHANGELOG_ENTRY=$(awk '/^## '"$ADDON_VERSION"'$/{flag=1; next} /^## [0-9]/{flag=0} flag' firefox/CHANGELOG.md)
-          
+
+          # Get previous version for changelog comparison
+          PREV_VERSION=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+
           # Create release notes
           cat << EOF > release_notes.md
-          ## Firefox Add-on v$ADDON_VERSION
-          
-          Base image update: jlesage/docker-firefox to $UPSTREAM_VERSION
-          
-          ### Changes
-          
+          ## What's Changed
+
           $CHANGELOG_ENTRY
-          
-          ### Links
-          
-          - [Upstream Release Notes](https://github.com/jlesage/docker-firefox/releases/tag/$UPSTREAM_VERSION)
+
+          **Upstream Release**: [jlesage/docker-firefox $UPSTREAM_VERSION](https://github.com/jlesage/docker-firefox/releases/tag/$UPSTREAM_VERSION)
           EOF
-          
+
+          # Add Full Changelog link if we have a previous version
+          if [ -n "$PREV_VERSION" ]; then
+            echo "" >> release_notes.md
+            echo "**Full Changelog**: https://github.com/${{ github.repository }}/compare/${PREV_VERSION}...${ADDON_VERSION}" >> release_notes.md
+          fi
+
           echo "Release notes generated"
 
       - name: Create GitHub Release
