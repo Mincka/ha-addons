@@ -103,14 +103,21 @@ jobs:
 
             Please update this Home Assistant add-on to use the new upstream version.
 
-            ## Step 1: Check upstream changes
+            ## Step 1: Fetch upstream release notes
 
-            First, fetch and review the upstream README to check for any new environment variables:
+            IMPORTANT: First, fetch the upstream release notes to understand what changed:
+            - Fetch https://api.github.com/repos/jlesage/docker-firefox/releases/tags/${{ needs.check-upstream.outputs.latest_tag }}
+            - Parse the "body" field from the JSON response to get the release notes
+            - You MUST include these changes in the changelog entries later
+
+            ## Step 2: Check upstream changes for new environment variables
+
+            Fetch and review the upstream README to check for any new environment variables:
             - Fetch https://raw.githubusercontent.com/jlesage/docker-firefox/master/README.md
             - Look at the "Environment Variables" section
             - Compare with the current environment variables in firefox/DOCS.md and firefox/config.yaml
 
-            ## Step 2: Update files
+            ## Step 3: Update files
 
             1. **firefox/build.yaml**: Update the build_from image tags to use ${{ needs.check-upstream.outputs.latest_tag }}
 
@@ -127,6 +134,9 @@ jobs:
 
             5. **firefox/CHANGELOG.md**:
                - Add a new entry documenting the upstream update
+               - IMPORTANT: Include the changes from the upstream release notes you fetched in Step 1
+               - Format: "Base image update: jlesage/docker-firefox to ${{ needs.check-upstream.outputs.latest_tag }}" followed by the upstream changes
+               - Look at previous changelog entries (e.g., 1.7.0, 1.8.0) to see how upstream changes are formatted
                - If new environment variables were added, mention them in the changelog
 
             6. **.upstream-version**: Update to ${{ needs.check-upstream.outputs.latest_tag }}
