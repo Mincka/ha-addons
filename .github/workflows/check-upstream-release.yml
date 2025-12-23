@@ -122,7 +122,9 @@ jobs:
             1. **firefox/build.yaml**: Update the build_from image tags to use ${{ needs.check-upstream.outputs.latest_tag }}
 
             2. **firefox/config.yaml**:
-               - Bump the addon version appropriately
+               - Bump the addon version following these rules:
+                 - PATCH version (e.g., 1.9.0 → 1.9.1): for upstream updates that only contain baseimage changes (jlesage/docker-baseimage-gui)
+                 - MINOR version (e.g., 1.9.0 → 1.10.0): when new environment variables are added OR the upstream release contains changes specific to Firefox itself (not just its baseimage)
                - If there are NEW environment variables in upstream that are not yet in the addon, add them to the `schema` and `options` sections following the existing pattern
 
             3. **firefox/DOCS.md**:
