@@ -61,23 +61,31 @@ jobs:
           fetch-depth: 0
           persist-credentials: true
 
-      - name: Check if PR already exists
+      - name: Check if PR already exists or was skipped
         id: pr_check
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           BRANCH_NAME="${{ needs.check-upstream.outputs.branch_name }}"
 
-          # Search by branch name (deterministic)
-          EXISTING=$(gh pr list --head "$BRANCH_NAME" --state open --json number --jq '.[0].number // empty')
-
-          if [ -n "$EXISTING" ]; then
-            echo "PR #$EXISTING already exists for branch $BRANCH_NAME"
+          # Check for open PR
+          OPEN_PR=$(gh pr list --head "$BRANCH_NAME" --state open --json number --jq '.[0].number // empty')
+          if [ -n "$OPEN_PR" ]; then
+            echo "PR #$OPEN_PR already open for branch $BRANCH_NAME"
             echo "skip=true" >> $GITHUB_OUTPUT
-          else
-            echo "No existing PR found for branch $BRANCH_NAME"
-            echo "skip=false" >> $GITHUB_OUTPUT
+            exit 0
           fi
+
+          # Check for closed PR (not merged = intentionally skipped)
+          CLOSED_PR=$(gh pr list --head "$BRANCH_NAME" --state closed --json number,mergedAt --jq '.[] | select(.mergedAt == null) | .number' | head -1)
+          if [ -n "$CLOSED_PR" ]; then
+            echo "PR #$CLOSED_PR was closed without merge - skipping this version"
+            echo "skip=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          echo "No existing or skipped PR found for branch $BRANCH_NAME"
+          echo "skip=false" >> $GITHUB_OUTPUT
 
       - name: Setup Git
         if: steps.pr_check.outputs.skip != 'true'
