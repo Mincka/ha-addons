@@ -5,7 +5,13 @@
       "Bash(git checkout:*)",
       "Bash(git add:*)",
       "Bash(git commit:*)",
-      "Bash(git push)"
+      "Bash(git push)",
+      "WebSearch",
+      "Bash(git pull:*)",
+      "Bash(git stash:*)",
+      "mcp__github__pull_request_read",
+      "mcp__github__get_release_by_tag",
+      "Bash(git push:*)"
     ],
     "deny": [],
     "ask": []
