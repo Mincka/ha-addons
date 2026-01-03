@@ -5,6 +5,24 @@ set -u # Treat unset variables as an error.
 
 export HOME=/config
 
+CUSTOM_START="/config/custom-start.sh"
+
+# Create custom start script if it does not exist
+if [ ! -f "$CUSTOM_START" ]; then
+  cat << 'EOF' > "$CUSTOM_START"
+  
+# Custom startup script
+# This file is executed automatically if present.
+EOF
+  chmod +x "$CUSTOM_START"
+fi
+
+# Execute custom start script if executable
+if [ -x "$CUSTOM_START" ]; then
+  echo "Executing custom-start.sh..."
+  "$CUSTOM_START" || echo "custom-start.sh exited with non-zero status, continuing"
+fi
+
 PIDS=
 
 notify() {
