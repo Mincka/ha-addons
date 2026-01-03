@@ -5,6 +5,8 @@ set -u # Treat unset variables as an error.
 
 export HOME=/config
 
+CUSTOM_START="/config/custom-start.sh"
+
 PIDS=
 
 notify() {
@@ -41,6 +43,22 @@ fi
 rm -rf /config/downloads
 
 ln -s /share/firefox /config/downloads
+
+# Create custom start script if it does not exist
+if [ ! -f "$CUSTOM_START" ]; then
+  cat << 'EOF' > "$CUSTOM_START"
+#!/bin/sh
+# Custom startup script
+# This file is executed automatically if present.
+EOF
+  chmod +x "$CUSTOM_START"
+fi
+
+# Execute custom start script if executable
+if [ -x "$CUSTOM_START" ]; then
+  echo "Executing custom-start.sh..."
+  "$CUSTOM_START" || echo "custom-start.sh exited with non-zero status, continuing"
+fi
 
 /usr/bin/firefox --version
 exec /usr/bin/firefox "$@" >> /config/log/firefox/output.log 2>> /config/log/firefox/error.log
