@@ -11,6 +11,7 @@ init: false
 apparmor: false
 panel_admin: false
 map:
+  - addon_config:rw
   - share:rw
 ingress: true
 ingress_port: 5800
