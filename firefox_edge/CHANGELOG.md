@@ -1,5 +1,11 @@
 <!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 
+## 1.9.1
+
+- Base image update: jlesage/docker-firefox to v26.01.1
+- Updated baseimage to version 4.10.6:
+  - On Mac devices, fixed conversion of Command+<Key> shortcuts to the proper Alt+<Key> shortcuts for Linux applications.
+
 ## 1.9.0
 
 - Base image update: jlesage/docker-firefox to v25.12.4 (Firefox 145.0.1-r0)
