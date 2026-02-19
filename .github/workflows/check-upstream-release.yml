@@ -16,6 +16,7 @@ jobs:
     outputs:
       should_update: ${{ steps.check.outputs.should_update }}
       latest_tag: ${{ steps.check.outputs.latest_tag }}
+      tracked_version: ${{ steps.check.outputs.tracked_version }}
       branch_name: ${{ steps.check.outputs.branch_name }}
     steps:
       - uses: actions/checkout@v6
@@ -37,6 +38,7 @@ jobs:
           # Check tracked version
           TRACKED=$(cat .upstream-version 2>/dev/null || echo "none")
           echo "Currently tracking: $TRACKED"
+          echo "tracked_version=$TRACKED" >> $GITHUB_OUTPUT
 
           if [ "$LATEST_TAG" != "$TRACKED" ]; then
             echo "🆕 New release detected!"
@@ -108,15 +110,20 @@ jobs:
             --allowedTools "Read,Edit,Write,Glob,Grep,WebFetch,Bash"
           prompt: |
             A new version of jlesage/docker-firefox has been released: ${{ needs.check-upstream.outputs.latest_tag }}
+            The currently tracked version is: ${{ needs.check-upstream.outputs.tracked_version }}
 
             Please update this Home Assistant add-on to use the new upstream version.
 
-            ## Step 1: Fetch upstream release notes
+            ## Step 1: Fetch upstream release notes (ALL intermediate releases)
 
-            IMPORTANT: First, fetch the upstream release notes to understand what changed:
-            - Fetch https://api.github.com/repos/jlesage/docker-firefox/releases/tags/${{ needs.check-upstream.outputs.latest_tag }}
-            - Parse the "body" field from the JSON response to get the release notes
-            - You MUST include these changes in the changelog entries later
+            IMPORTANT: There may be MULTIPLE upstream releases between our tracked version (${{ needs.check-upstream.outputs.tracked_version }}) and the latest (${{ needs.check-upstream.outputs.latest_tag }}).
+            You MUST fetch and include release notes for ALL intermediate versions, not just the latest one.
+
+            1. Fetch the list of all releases: https://api.github.com/repos/jlesage/docker-firefox/releases?per_page=20
+            2. Parse the JSON array and identify ALL releases that are NEWER than ${{ needs.check-upstream.outputs.tracked_version }} (up to and including ${{ needs.check-upstream.outputs.latest_tag }})
+            3. For each intermediate release, extract the "tag_name" and "body" fields
+            4. You MUST include the changes from ALL intermediate releases in the changelog entries later, not just the latest one
+            5. If a release contains significant Firefox-specific changes (not just baseimage updates), note this for version bumping decisions
 
             ## Step 2: Check upstream changes for new environment variables
 
@@ -144,8 +151,8 @@ jobs:
 
             5. **firefox/CHANGELOG.md**:
                - Add a new entry documenting the upstream update
-               - IMPORTANT: Include the changes from the upstream release notes you fetched in Step 1
-               - Format: "Base image update: jlesage/docker-firefox to ${{ needs.check-upstream.outputs.latest_tag }}" followed by the upstream changes
+               - IMPORTANT: Include the changes from ALL intermediate upstream releases you fetched in Step 1 (from ${{ needs.check-upstream.outputs.tracked_version }} to ${{ needs.check-upstream.outputs.latest_tag }}), not just the latest release
+               - Format: "Base image update: jlesage/docker-firefox to ${{ needs.check-upstream.outputs.latest_tag }}" followed by the combined upstream changes from all intermediate releases
                - Look at previous changelog entries (e.g., 1.7.0, 1.8.0) to see how upstream changes are formatted
                - If new environment variables were added, mention them in the changelog
 
@@ -200,17 +207,21 @@ jobs:
           VERSION="${{ needs.check-upstream.outputs.latest_tag }}"
           BRANCH_NAME="${{ needs.check-upstream.outputs.branch_name }}"
 
+          TRACKED="${{ needs.check-upstream.outputs.tracked_version }}"
+
           PR_URL=$(gh pr create \
             --title "🔄 Update to jlesage/docker-firefox $VERSION" \
             --body "## Automated Upstream Sync
 
           **New upstream release:** [\`$VERSION\`](https://github.com/jlesage/docker-firefox/releases/tag/$VERSION)
+          **Previous tracked version:** \`$TRACKED\`
 
           This PR updates the Firefox Home Assistant add-on to use the latest upstream Docker image.
+          All intermediate releases between \`$TRACKED\` and \`$VERSION\` are included in the changelog.
 
           ### Checklist
           - [ ] Review the changes in \`firefox/\` folder
-          - [ ] Check CHANGELOG.md entry
+          - [ ] Check CHANGELOG.md entry covers all intermediate releases
           - [ ] Verify new environment variables (if any)
 
           ---
