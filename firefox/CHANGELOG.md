@@ -1,10 +1,20 @@
 <!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 
-## 1.9.2
+## 1.10.0
 
 - Base image update: jlesage/docker-firefox to v26.02.2
-- Updated baseimage to version 4.11.1:
+- Updated baseimage to version 4.11.0 (v26.02.1), then 4.11.1 (v26.02.2):
+  - Added a web terminal providing shell access to the container.
+  - Fixed audio being paused when switching to another browser tab.
+  - Web file manager is now displayed in a modal window.
+  - Fixed file manager failures when uploading zero-byte files.
+  - Fixed upload interruptions from interfering with other uploads.
+  - Enhanced file manager error reporting accuracy.
+  - Improved web services server stability and reliability.
+  - Updated TigerVNC to 1.16.0 and X server to 21.1.21.
   - Fixed issue where taking ownership of directory would fail.
+- Added new environment variable:
+  - WEB_TERMINAL: Enable access to a terminal from the web interface
 
 ## 1.9.1
 
