@@ -1,5 +1,11 @@
 <!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 
+## 1.9.2
+
+- Base image update: jlesage/docker-firefox to v26.02.2
+- Updated baseimage to version 4.11.1:
+  - Fixed issue where taking ownership of directory would fail.
+
 ## 1.9.1
 
 - Base image update: jlesage/docker-firefox to v26.01.1
