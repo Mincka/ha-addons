@@ -1,5 +1,11 @@
 <!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 
+## 1.10.1
+
+- Base image update: jlesage/docker-firefox to v26.02.3
+- Updated baseimage to version 4.11.2:
+  - Fixed X server failing to find the appropriate Mesa driver on some setups.
+
 ## 1.10.0
 
 - Base image update: jlesage/docker-firefox to v26.02.2
