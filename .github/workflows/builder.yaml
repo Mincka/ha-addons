@@ -76,7 +76,7 @@ jobs:
     if: needs.init.outputs.changed == 'true'
     name: Build ${{ matrix.arch }} ${{ matrix.addon }} add-on
     strategy:
-      max-parallel: 1
+      max-parallel: 4
       matrix:
         addon: ${{ fromJson(needs.init.outputs.changed_addons) }}
         arch: ["aarch64", "amd64"]
@@ -117,11 +117,11 @@ jobs:
         if: steps.check.outputs.build_arch == 'true'
         run: |
           IMAGE="ghcr.io/home-assistant/amd64-builder:2026.02.1"
-          for i in $(seq 1 5); do
+          for i in $(seq 1 50); do
             echo "Attempt $i to pull $IMAGE..."
             docker pull "$IMAGE" && break
             echo "Failed, waiting 5s..."
-            sleep 5
+            sleep 1
           done
           docker image inspect "$IMAGE" > /dev/null 2>&1 || exit 1
 
