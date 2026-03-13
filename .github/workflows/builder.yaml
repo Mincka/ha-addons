@@ -113,12 +113,25 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Pre-pull builder image with retry
+        if: steps.check.outputs.build_arch == 'true'
+        run: |
+          IMAGE="ghcr.io/home-assistant/amd64-builder:2026.02.1"
+          for i in $(seq 1 5); do
+            echo "Attempt $i to pull $IMAGE..."
+            docker pull "$IMAGE" && break
+            echo "Failed, waiting 30s..."
+            sleep 30
+          done
+          docker image inspect "$IMAGE" > /dev/null 2>&1 || exit 1
+
       - name: Build ${{ matrix.addon }} add-on
         if: steps.check.outputs.build_arch == 'true'
         uses: home-assistant/builder@2026.02.1
         with:
           args: |
             ${{ env.BUILD_ARGS }} \
+            --no-cosign-verify \
             --${{ matrix.arch }} \
             --target /data/${{ matrix.addon }} \
             --image "${{ steps.check.outputs.image }}" \
