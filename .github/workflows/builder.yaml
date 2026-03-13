@@ -30,10 +30,11 @@ jobs:
         id: changed_files
         run: |
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            # Pour les PRs: compare la base avec le head
             FILES=$(git diff --name-only origin/${{ github.base_ref }}...HEAD | tr '\n' ' ')
+          elif [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            # Force build all: list all files
+            FILES=$(git ls-files | tr '\n' ' ')
           else
-            # Pour les push: compare avec le commit précédent
             FILES=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | tr '\n' ' ')
           fi
           echo "all=$FILES" >> $GITHUB_OUTPUT
