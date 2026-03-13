@@ -1,14 +1,12 @@
 name: "Firefox (Edge)"
-version: "1.4.0"
+version: "1.10.1"
 slug: "firefox_edge"
 panel_icon: "mdi:firefox"
-description: "Docker container for Firefox. Update to the latest Firefox version on container start."
+description: Docker container for Firefox. Update to the latest Firefox version on container start.
 url: "https://github.com/mincka/ha-addons/tree/main/firefox_edge"
 arch:
   - aarch64
   - amd64
-  - armv7
-  - i386
 init: false
 apparmor: false
 panel_admin: false
@@ -52,7 +50,13 @@ options:
   WEB_AUTHENTICATION: "0"
   WEB_AUTHENTICATION_USERNAME: ""
   WEB_AUTHENTICATION_PASSWORD: ""
-  FF_CUSTOM_ARGS: "0"  
+  FF_CUSTOM_ARGS: ""
+  WEB_FILE_MANAGER: "0"
+  WEB_FILE_MANAGER_ALLOWED_PATHS: "AUTO"
+  WEB_FILE_MANAGER_DENIED_PATHS: ""
+  WEB_NOTIFICATION: "0"
+  WEB_TERMINAL: "0"
+  WEB_AUTHENTICATION_TOKEN_VALIDITY_TIME: "24"
 schema:
   VNC_PASSWORD: str
   ENABLE_CJK_FONT: str
@@ -73,4 +77,10 @@ schema:
   WEB_AUTHENTICATION: str
   WEB_AUTHENTICATION_USERNAME: str
   WEB_AUTHENTICATION_PASSWORD: str
-  FF_CUSTOM_ARGS: str  
+  FF_CUSTOM_ARGS: str
+  WEB_FILE_MANAGER: str
+  WEB_FILE_MANAGER_ALLOWED_PATHS: str
+  WEB_FILE_MANAGER_DENIED_PATHS: str
+  WEB_NOTIFICATION: str
+  WEB_TERMINAL: str
+  WEB_AUTHENTICATION_TOKEN_VALIDITY_TIME: str
