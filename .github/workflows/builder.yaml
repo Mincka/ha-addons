@@ -76,7 +76,7 @@ jobs:
     if: needs.init.outputs.changed == 'true'
     name: Build ${{ matrix.arch }} ${{ matrix.addon }} add-on
     strategy:
-      max-parallel: 1
+      max-parallel: 4
       matrix:
         addon: ${{ fromJson(needs.init.outputs.changed_addons) }}
         arch: ["aarch64", "amd64"]
