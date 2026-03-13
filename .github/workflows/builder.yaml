@@ -8,6 +8,8 @@ on:
   push:
     branches:
       - main
+    paths-ignore:
+      - '**/config.yaml'
   pull_request:
     branches:
       - main
@@ -24,7 +26,7 @@ jobs:
       - name: Check out the repository
         uses: actions/checkout@v6
         with:
-          fetch-depth: 0  # Nécessaire pour git diff
+          fetch-depth: 0
 
       - name: Get changed files
         id: changed_files
@@ -121,7 +123,7 @@ jobs:
             echo "Attempt $i to pull $IMAGE..."
             docker pull "$IMAGE" && break
             echo "Failed, waiting 5s..."
-            sleep 1
+            sleep 5
           done
           docker image inspect "$IMAGE" > /dev/null 2>&1 || exit 1
 
@@ -137,3 +139,44 @@ jobs:
             --image "${{ steps.check.outputs.image }}" \
             --docker-hub "ghcr.io/${{ github.repository_owner }}" \
             --addon
+
+  bump-version:
+    needs: build
+    if: needs.build.result == 'success' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Bump version in config.yaml from .next-version files
+        run: |
+          changed=false
+
+          for addon_dir in firefox firefox_edge; do
+            next_version_file="$addon_dir/.next-version"
+            if [[ -f "$next_version_file" ]]; then
+              NEW_VERSION=$(cat "$next_version_file" | tr -d '[:space:]')
+              CURRENT_VERSION=$(grep -E '^version:' "$addon_dir/config.yaml" | sed 's/version:[[:space:]]*//' | tr -d '"' | tr -d "'")
+
+              if [[ "$NEW_VERSION" != "$CURRENT_VERSION" ]]; then
+                echo "Bumping $addon_dir from $CURRENT_VERSION to $NEW_VERSION"
+                sed -i "s/^version:.*/version: \"$NEW_VERSION\"/" "$addon_dir/config.yaml"
+                rm -f "$next_version_file"
+                changed=true
+              else
+                echo "$addon_dir already at version $NEW_VERSION"
+              fi
+            fi
+          done
+
+          if [[ "$changed" == "true" ]]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add -A
+            git commit -m "chore: bump version after successful build"
+            git push
+          else
+            echo "No version bump needed"
+          fi

@@ -8,13 +8,17 @@ on:
 
 jobs:
   create-release:
-    if: github.event.workflow_run.conclusion == 'success'
+    if: >-
+      github.event.workflow_run.conclusion == 'success'
+      && github.event.workflow_run.event == 'push'
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
       - uses: actions/checkout@v6
         with:
+          # Fetch latest to get the version bump commit
+          ref: main
           fetch-depth: 0
 
       - name: Get version info
@@ -23,11 +27,11 @@ jobs:
           # Get upstream version
           UPSTREAM_VERSION=$(cat .upstream-version)
           echo "upstream_version=$UPSTREAM_VERSION" >> $GITHUB_OUTPUT
-          
-          # Get addon version from config.yaml (handle various formats)
+
+          # Get addon version from config.yaml
           ADDON_VERSION=$(grep -E '^[[:space:]]*version:' firefox/config.yaml | head -n1 | sed 's/.*version:[[:space:]]*["'\'']*\([^"'\'']*\)["'\'']*/\1/' | tr -d ' ')
           echo "addon_version=$ADDON_VERSION" >> $GITHUB_OUTPUT
-          
+
           echo "Upstream version: $UPSTREAM_VERSION"
           echo "Addon version: $ADDON_VERSION"
 
@@ -37,7 +41,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           ADDON_VERSION="${{ steps.version.outputs.addon_version }}"
-          
+
           if gh release view "$ADDON_VERSION" > /dev/null 2>&1; then
             echo "Release $ADDON_VERSION already exists"
             echo "exists=true" >> $GITHUB_OUTPUT
@@ -82,9 +86,9 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           ADDON_VERSION="${{ steps.version.outputs.addon_version }}"
-          
+
           gh release create "$ADDON_VERSION" \
             --title "v$ADDON_VERSION" \
             --notes-file release_notes.md
-          
-          echo "✅ Created release $ADDON_VERSION"
+
+          echo "Created release $ADDON_VERSION"

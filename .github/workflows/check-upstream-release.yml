@@ -137,28 +137,33 @@ jobs:
             1. **firefox/build.yaml**: Update the build_from image tags to use ${{ needs.check-upstream.outputs.latest_tag }}
 
             2. **firefox/config.yaml**:
-               - Bump the addon version following these rules:
-                 - PATCH version (e.g., 1.9.0 → 1.9.1): for upstream updates that only contain baseimage changes (jlesage/docker-baseimage-gui)
-                 - MINOR version (e.g., 1.9.0 → 1.10.0): when new environment variables are added OR the upstream release contains changes specific to Firefox itself (not just its baseimage)
-               - If there are NEW environment variables in upstream that are not yet in the addon, add them to the `schema` and `options` sections following the existing pattern
+              - Do NOT change the `version` field — the version bump happens automatically after a successful build.
+              - If there are NEW environment variables in upstream that are not yet in the addon, add them to the `schema` and `options` sections following the existing pattern
 
-            3. **firefox/DOCS.md**:
+            3. **firefox/.next-version**:
+              - Create this file with ONLY the new version number (nothing else)
+              - Determine the version following these rules:
+                - PATCH version (e.g., 1.9.0 → 1.9.1): for upstream updates that only contain baseimage changes
+                - MINOR version (e.g., 1.9.0 → 1.10.0): when new environment variables are added OR the upstream release contains Firefox-specific changes
+              - Example content: `1.10.1`
+
+            4. **firefox/DOCS.md**:
                - If there are NEW environment variables, add them to the Configuration section following the existing table format and descriptions
 
-            4. **firefox/translations/en.yaml** (and other translation files in firefox/translations/):
+            5. **firefox/translations/en.yaml** (and other translation files in firefox/translations/):
                - If there are NEW environment variables, add their name and description translations following the existing pattern
                - Check the structure of existing entries and replicate it for new variables
 
-            5. **firefox/CHANGELOG.md**:
+            6. **firefox/CHANGELOG.md**:
                - Add a new entry documenting the upstream update
                - IMPORTANT: Include the changes from ALL intermediate upstream releases you fetched in Step 1 (from ${{ needs.check-upstream.outputs.tracked_version }} to ${{ needs.check-upstream.outputs.latest_tag }}), not just the latest release
                - Format: "Base image update: jlesage/docker-firefox to ${{ needs.check-upstream.outputs.latest_tag }}" followed by the combined upstream changes from all intermediate releases
                - Look at previous changelog entries (e.g., 1.7.0, 1.8.0) to see how upstream changes are formatted
                - If new environment variables were added, mention them in the changelog
 
-            6. **.upstream-version**: Update to ${{ needs.check-upstream.outputs.latest_tag }}
+            7. **.upstream-version**: Update to ${{ needs.check-upstream.outputs.latest_tag }}
 
-            7. Check **firefox_edge/** folder for similar updates if needed (build.yaml, config.yaml, translations/, DOCS.md, CHANGELOG.md)
+            8. Check **firefox_edge/** folder for similar updates if needed (build.yaml, config.yaml, translations/, DOCS.md, CHANGELOG.md)
 
             ## Important
 
