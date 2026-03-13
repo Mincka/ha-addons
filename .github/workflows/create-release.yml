@@ -1,14 +1,14 @@
 name: Create Release on Upstream Update
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - '.upstream-version'
+  workflow_run:
+    workflows: ["Builder"]
+    types:
+      - completed
 
 jobs:
   create-release:
+    if: github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     permissions:
       contents: write
