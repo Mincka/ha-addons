@@ -1,5 +1,12 @@
 <!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 
+## 1.10.2
+
+- Base image update: jlesage/docker-firefox to v26.03.1
+- Updated baseimage to version 4.11.3:
+  - Enable xcompmgr output only when debug is enabled.
+  - Enhanced self-signed certificates by including the Subject Alternative Name (SAN) and using the container hostname instead of a dummy domain name.
+
 ## 1.10.1
 
 - Base image update: jlesage/docker-firefox to v26.02.3
