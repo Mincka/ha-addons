@@ -1,4 +1,4 @@
-FROM jlesage/firefox:v26.02.3
+FROM jlesage/firefox:v26.03.1
 
 RUN apk del firefox
 RUN sed -r -i -e 's/v[0-9]+\.[0-9]+/edge/g' /etc/apk/repositories
