@@ -19,7 +19,7 @@ jobs:
       tracked_version: ${{ steps.check.outputs.tracked_version }}
       branch_name: ${{ steps.check.outputs.branch_name }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Check for new upstream release
         id: check
@@ -58,7 +58,7 @@ jobs:
       issues: write
       id-token: write
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
           persist-credentials: true
