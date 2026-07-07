@@ -1,5 +1,23 @@
 <!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 
+## 1.11.0
+
+- Base image update: jlesage/docker-firefox to v26.07.1
+- Updated Firefox to version 151.0.3-r0.
+- Updated baseimage to version 4.11.3 (v26.03.1), then 4.12.5 (v26.07.1):
+  - Enabled xcompmgr output only when debug is enabled.
+  - Enhanced self-signed certificates by including the Subject Alternative Name (SAN) and using the container hostname instead of a dummy domain name.
+  - Added the ability to run the container with a read-only filesystem.
+  - Added the ability to configure the shell used by the web terminal.
+  - Enabled window shadows to improve support of GTK4 applications.
+  - Switched to fastcompmgr as the X compositor.
+  - Updated TigerVNC to version 1.16.2.
+  - Updated noVNC to version 1.7.0.
+  - Improved web authentication compatibility with reverse proxies by using relative redirects.
+  - Force usage of the local X display to avoid connecting to the host X server in Docker host network mode.
+- Added new environment variable:
+  - WEB_TERMINAL_SHELL_PATH: Configure the shell used by the web terminal
+
 ## 1.10.1
 
 - Base image update: jlesage/docker-firefox to v26.02.3
