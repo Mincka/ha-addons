@@ -118,7 +118,7 @@ jobs:
       - name: Pre-pull builder image with retry
         if: steps.check.outputs.build_arch == 'true'
         run: |
-          IMAGE="ghcr.io/home-assistant/amd64-builder:2026.02.1"
+          IMAGE="ghcr.io/home-assistant/amd64-builder:2026.03.2"
           for i in $(seq 1 50); do
             echo "Attempt $i to pull $IMAGE..."
             docker pull "$IMAGE" && break
@@ -129,7 +129,7 @@ jobs:
 
       - name: Build ${{ matrix.addon }} add-on
         if: steps.check.outputs.build_arch == 'true'
-        uses: home-assistant/builder@2026.06.0
+        uses: home-assistant/builder@2026.03.2
         with:
           args: |
             ${{ env.BUILD_ARGS }} \
