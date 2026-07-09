@@ -1,5 +1,14 @@
 <!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 
+## 1.11.1
+
+- Fixed the add-on failing to start on upstream v26.07.1 (baseimage 4.12.5). The
+  new baseimage relocated its runtime dir under `/tmp/run`, and its tmp-clear
+  init script aborted container startup when it could not remove the Home
+  Assistant supervisor's bind-mounts there (the read-only PulseAudio socket and
+  the in-use container-id file), failing with "Read-only file system" /
+  "Resource busy". The tmp-clear script is now tolerant of those mounts.
+
 ## 1.11.0
 
 - Base image update: jlesage/docker-firefox to v26.07.1
