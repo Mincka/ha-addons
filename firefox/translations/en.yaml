@@ -74,6 +74,9 @@ configuration:
   WEB_TERMINAL:
     name: Web Terminal
     description: When set to 1, enables access to a terminal from the web interface, providing shell access to the container.
+  WEB_TERMINAL_SHELL_PATH:
+    name: Web Terminal Shell Path
+    description: The shell used by the web terminal. Only applies when Web Terminal is enabled.
   WEB_AUTHENTICATION_TOKEN_VALIDITY_TIME:
     name: Web Authentication Token Validity Time
     description: Lifetime of an authentication token, in hours. Default is 24 hours. Only applies when Web Authentication is enabled.
