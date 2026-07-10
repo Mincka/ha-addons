@@ -1,5 +1,11 @@
 FROM jlesage/firefox:v26.07.1
 
+LABEL \
+  org.opencontainers.image.title="Firefox Home Assistant Add-on (Edge)" \
+  org.opencontainers.image.description="Docker container for Firefox. Update to the latest Firefox version on container start." \
+  org.opencontainers.image.source="https://github.com/mincka/ha-addons" \
+  org.opencontainers.image.licenses="MIT"
+
 RUN apk del firefox
 RUN sed -r -i -e 's/v[0-9]+\.[0-9]+/edge/g' /etc/apk/repositories
 RUN apk update && apk upgrade

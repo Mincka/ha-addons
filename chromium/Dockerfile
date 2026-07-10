@@ -1,5 +1,11 @@
 FROM jlesage/chromium:v26.07.1
 
+LABEL \
+  org.opencontainers.image.title="Chromium Home Assistant Add-on" \
+  org.opencontainers.image.description="Docker container for Chromium" \
+  org.opencontainers.image.source="https://github.com/mincka/ha-addons" \
+  org.opencontainers.image.licenses="MIT"
+
 # Ship a Home Assistant-tolerant tmp-clear init script. The stock upstream
 # script aborts container init when it cannot remove the supervisor's
 # read-only/busy bind-mounts (pulse.sock, cid) under /tmp/run.
