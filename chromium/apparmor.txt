@@ -1,0 +1,78 @@
+#include <tunables/global>
+
+# Hardened AppArmor profile for the Chromium Home Assistant add-on.
+#
+# The profile name MUST match the add-on slug ("chromium"), otherwise the
+# Supervisor cannot load it.
+#
+# This add-on runs the jlesage baseimage-gui (S6-Overlay/cinit) and Chromium
+# with its namespace sandbox enabled. File access is left broad because the
+# init system and a browser touch files all over the image (tightly scoping
+# paths breaks the s6 init, e.g. reading the /init script). The hardening comes
+# from restricting the powerful bits: capabilities are limited to the set the
+# init and the sandbox actually need, and a few sensitive locations are denied.
+#
+# NOTE: this cannot be validated in CI (the build host has no AppArmor LSM). If
+# the add-on fails to start, inspect the host log for the denial
+# (`dmesg | grep -i 'apparmor="DENIED".*profile="chromium"'`) and widen the
+# offending rule. Last resort: add `apparmor: false` to config.yaml.
+profile chromium flags=(attach_disconnected,mediate_deleted) {
+  #include <abstractions/base>
+  #include <abstractions/nameservice>
+
+  # --------------------------------------------------------------------------
+  # Networking — a browser needs full network access.
+  # --------------------------------------------------------------------------
+  network,
+
+  # --------------------------------------------------------------------------
+  # Capabilities — restricted to what the S6-Overlay init and the Chromium
+  # namespace sandbox use, rather than granting all of them. This is the main
+  # hardening: it drops the dangerous caps we do NOT need (sys_module,
+  # sys_rawio, sys_boot, sys_time, mac_*, syslog, ...).
+  # --------------------------------------------------------------------------
+  # Docker's default capability set (present in every add-on container):
+  capability setuid,        # init drops privileges to the app user
+  capability setgid,
+  capability setpcap,       # init drops capabilities
+  capability setfcap,
+  capability chown,         # take ownership of /config, /data
+  capability fowner,
+  capability fsetid,
+  capability dac_override,
+  capability kill,          # supervisor stops services
+  capability mknod,         # device nodes
+  capability sys_chroot,    # pivot_root in the sandbox
+  capability net_bind_service,
+  capability net_raw,
+  capability audit_write,
+  # Added for the Chromium sandbox (SYS_ADMIN is granted via config privileged):
+  capability sys_admin,     # build/enter sandbox namespaces, mount
+  capability sys_ptrace,    # crashpad handler / zygote
+  capability ipc_lock,      # shared memory / mlock
+
+  # --------------------------------------------------------------------------
+  # Namespace sandbox: private mounts, pivot_root, and tracing/signalling the
+  # child processes (all run under this same profile).
+  # --------------------------------------------------------------------------
+  mount,
+  umount,
+  pivot_root,
+  ptrace (read, trace) peer=chromium,
+  signal (send, receive) peer=chromium,
+  signal (send) set=(kill,term,int,hup,cont,usr1,usr2),
+
+  # --------------------------------------------------------------------------
+  # Broad file access (read/write/exec/mmap). A browser and the s6 init read
+  # and write across the whole image; the denials below carve out the clearly
+  # out-of-scope, sensitive locations.
+  # --------------------------------------------------------------------------
+  file,
+
+  # --------------------------------------------------------------------------
+  # Hardening denials — take precedence over the broad `file` rule above.
+  # --------------------------------------------------------------------------
+  deny /root/** rwklx,
+  deny @{PROC}/sysrq-trigger rwklx,
+  deny /sys/kernel/security/** rwklx,
+}
