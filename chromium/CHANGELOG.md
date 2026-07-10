@@ -10,6 +10,4 @@
 - Ships a Home Assistant-tolerant tmp-clear init script so the add-on starts cleanly under the
   supervisor's `/tmp/run` bind-mounts.
 - Ships a hardened AppArmor profile (capabilities scoped to what the init system and the
-  Chromium sandbox need, plus mount and ptrace rules) instead of running unconfined. File
-  access is left broad, so options that run `apk` at startup (`INSTALL_PACKAGES`,
-  `ENABLE_CJK_FONT`) keep working.
+  Chromium sandbox need, plus mount and ptrace rules) instead of running unconfined.
