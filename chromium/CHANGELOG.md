@@ -9,7 +9,7 @@
   `--no-sandbox` fallback and its "unsupported command-line flag" infobar.
 - Ships a Home Assistant-tolerant tmp-clear init script so the add-on starts cleanly under the
   supervisor's `/tmp/run` bind-mounts.
-- Ships a hardened AppArmor profile (scoped capabilities, mount and ptrace rules) instead of
-  running unconfined. Note: because it restricts writes to system directories, enabling
-  `INSTALL_PACKAGES` or `ENABLE_CJK_FONT` (which run `apk` at startup) is not compatible with the
-  profile; disable AppArmor (`apparmor: false`) if you need those.
+- Ships a hardened AppArmor profile (capabilities scoped to what the init system and the
+  Chromium sandbox need, plus mount and ptrace rules) instead of running unconfined. File
+  access is left broad, so options that run `apk` at startup (`INSTALL_PACKAGES`,
+  `ENABLE_CJK_FONT`) keep working.
