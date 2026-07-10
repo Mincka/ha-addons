@@ -18,11 +18,15 @@ He's the real hero who needs to be [supported](https://github.com/sponsors/jlesa
 
 ## Difference with the original container
 
-To make it compatible with Home Assistant persistence, I needed to remap folders and to do so, the startup script runs as `root`. I will try to avoid this in the future.
+To make it compatible with Home Assistant persistence, the Firefox profile is remapped to the add-on's `/data` volume and downloads to the `/share/firefox` folder. This remapping happens during container initialization, so Firefox itself runs as an unprivileged user.
 
 ## How to use
 
-Just install, start the container and click on "Open Web UI". You can use "Show in sidebar" for easy access. Everything you do is persisted in Firefox. Even if you stop the Add-on or restart Home Assistant host OS.
+Just install, start the container and click on "Open Web UI". You can use "Show in sidebar" for easy access. Everything you do is persisted in Firefox, even if you stop the Add-on or restart Home Assistant host OS.
+
+## File browser and terminal
+
+The underlying image includes an integrated web file manager and a web terminal. Both are disabled by default and can be enabled from the add-on's Configuration tab (`WEB_FILE_MANAGER` and `WEB_TERMINAL`).
 
 ## Downloads
 

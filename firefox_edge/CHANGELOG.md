@@ -1,5 +1,20 @@
 <!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 
+## 1.12.0
+
+- New: a Chromium add-on is now also available in this repository, if you'd
+  prefer a Chromium-based browser.
+- Security hardening:
+  - Firefox now runs as an unprivileged user instead of root. The startup
+    `apk upgrade` and the profile remap were moved out of the startup script
+    into init scripts that run as root (`50-update-firefox.sh` and
+    `89-ha-persist.sh`), which removes the need for `USER_ID=0`.
+  - The Firefox update at startup is now best-effort: if `apk upgrade` fails
+    (e.g. no network), the add-on still starts with the image's Firefox version.
+  - Added a hardened AppArmor profile (Docker's default capabilities plus
+    sys_ptrace, no sys_admin) instead of running unconfined. This raises the
+    add-on's Home Assistant security rating from 6 to 8.
+
 ## 1.11.1
 
 - Fixed the add-on failing to start on upstream v26.07.1 (baseimage 4.12.5). The

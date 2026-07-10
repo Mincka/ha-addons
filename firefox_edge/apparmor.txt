@@ -1,57 +1,60 @@
 #include <tunables/global>
 
-profile example flags=(attach_disconnected,mediate_deleted) {
+# Hardened AppArmor profile for the Firefox (Edge) Home Assistant add-on.
+#
+# The profile name MUST match the add-on slug ("firefox_edge"), otherwise the
+# Supervisor cannot load it.
+#
+# Like the stable Firefox add-on, this variant runs the browser as an
+# unprivileged user. It additionally runs `apk update && apk upgrade` at init
+# (as root, via a cont-init.d script) to pull the latest Firefox from Alpine
+# edge; that package operation relies on the broad file access below.
+#
+# NOTE: this cannot be validated in CI (the build host has no AppArmor LSM). If
+# the add-on fails to start, inspect the host log for the denial
+# (`dmesg | grep -i 'apparmor="DENIED".*profile="firefox_edge"'`) and widen the
+# offending rule. Last resort: add `apparmor: false` to config.yaml.
+profile firefox_edge flags=(attach_disconnected,mediate_deleted) {
   #include <abstractions/base>
+  #include <abstractions/nameservice>
 
-  # Capabilities
+  # Firefox and the apk upgrade need full network access.
+  network,
+
+  # Capabilities — Docker's default set (present in every add-on container)
+  # plus sys_ptrace for the crash reporter. This does NOT grant sys_admin,
+  # sys_module, sys_rawio, etc.
+  capability setuid,        # init drops privileges to the app user
+  capability setgid,
+  capability setpcap,       # init drops capabilities
+  capability setfcap,
+  capability chown,         # apk/init take ownership of files
+  capability fowner,
+  capability fsetid,
+  capability dac_override,
+  capability kill,          # supervisor stops services
+  capability mknod,         # device nodes
+  capability sys_chroot,    # Firefox content sandbox
+  capability net_bind_service,
+  capability net_raw,
+  capability audit_write,
+  capability sys_ptrace,    # Firefox crash reporter
+
+  # Firefox's content sandbox sets up private mounts inside a namespace.
+  mount,
+  umount,
+  pivot_root,
+  ptrace (read, trace) peer=firefox_edge,
+  signal (send, receive) peer=firefox_edge,
+  signal (send) set=(kill,term,int,hup,cont,usr1,usr2),
+
+  # Broad file access (read/write/exec/mmap). Required in particular so the
+  # init-time `apk upgrade` can rewrite the system directories. The denials
+  # below carve out the clearly out-of-scope, sensitive locations.
   file,
-  signal (send) set=(kill,term,int,hup,cont),
 
-  # S6-Overlay
-  /init ix,
-  /bin/** ix,
-  /usr/bin/** ix,
-  /run/{s6,s6-rc*,service}/** ix,
-  /package/** ix,
-  /command/** ix,
-  /etc/services.d/** rwix,
-  /etc/cont-init.d/** rwix,
-  /etc/cont-finish.d/** rwix,
-  /run/{,**} rwk,
-  /dev/tty rw,
-
-  # Bashio
-  /usr/lib/bashio/** ix,
-  /tmp/** rwk,
-
-  # Access to options.json and other files within your addon
-  /data/** rw,
-
-  # Start new profile for service
-  /usr/bin/my_program cx -> my_program,
-
-  profile my_program flags=(attach_disconnected,mediate_deleted) {
-    #include <abstractions/base>
-
-    # Receive signals from S6-Overlay
-    signal (receive) peer=*_example,
-
-    # Access to options.json and other files within your addon
-    /data/** rw,
-
-    # Access to mapped volumes specified in config.json
-    /share/** rw,
-
-    # Access required for service functionality
-    # Note: List was built by doing the following:
-    # 1. Add what is obviously needed based on what is in the script
-    # 2. Add `complain` as a flag to this profile temporarily and run the addon
-    # 3. Review the audit log with `journalctl _TRANSPORT="audit" -g 'apparmor="ALLOWED"'` and add other access as needed
-    # Remember to remove the `complain` flag when you are done
-    /usr/bin/my_program r,
-    /bin/bash rix,
-    /bin/echo ix,
-    /etc/passwd r,
-    /dev/tty rw,
-  }
+  # Hardening denials — take precedence over the broad `file` rule above.
+  deny /root/** rwklx,
+  deny @{PROC}/sysrq-trigger rwklx,
+  deny /sys/kernel/security/** rwklx,
 }

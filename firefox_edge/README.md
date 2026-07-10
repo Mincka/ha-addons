@@ -21,11 +21,16 @@ He's the real hero who needs to be [supported](https://github.com/sponsors/jlesa
 There are a few differences that were either required for this container to work as an Add-on or just my own tweaks based on my preferences:
 
 - Edge version: this container is not based on Alpine **Stable** but Alpine **Edge**. The main reason was to benefit from the latest Firefox version available. During the startup, the container may show in the log an older version of Firefox, it can be ignored. It attempts to update Firefox each time the container starts.
-- To make it compatible with Home Assistant persistence, I needed to remap folders and to do so, the startup script runs as `root`. I will try to avoid this in the future.
+- To make it compatible with Home Assistant persistence, the Firefox profile is remapped to `/data` and downloads to `/share/firefox` during container initialization. Like the stable add-on, Firefox itself runs as an unprivileged user.
+- Unlike the stable add-on, this variant runs `apk update && apk upgrade` at every startup (during init, as root) to pull the latest Firefox from Alpine edge. If the upgrade fails (e.g. no network), the add-on still starts with the Firefox version baked into the image.
 
 ## How to use
 
-Just install, start the container and click on "Open Web UI". You can use "Show in sidebar" for easy access. Everything you do is persisted in Firefox. Even if you stop the Add-on or restart Home Assistant host OS.
+Just install, start the container and click on "Open Web UI". You can use "Show in sidebar" for easy access. Everything you do is persisted in Firefox, even if you stop the Add-on or restart Home Assistant host OS.
+
+## File browser and terminal
+
+The underlying image includes an integrated web file manager and a web terminal. Both are disabled by default and can be enabled from the add-on's Configuration tab (`WEB_FILE_MANAGER` and `WEB_TERMINAL`).
 
 ## Downloads
 

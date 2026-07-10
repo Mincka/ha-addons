@@ -1,13 +1,13 @@
-name: Check Upstream Firefox Release
+name: Check Upstream Chromium Release
 
 on:
   schedule:
-    - cron: '0 6 * * *'  # Daily at 6 AM UTC
+    - cron: '30 6 * * *'  # Daily at 6:30 AM UTC
   workflow_dispatch:      # Manual trigger
 
 # Prevent concurrent runs
 concurrency:
-  group: upstream-firefox-check
+  group: upstream-chromium-check
   cancel-in-progress: false
 
 jobs:
@@ -26,17 +26,17 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Get latest release from jlesage/docker-firefox
-          LATEST_TAG=$(gh api repos/jlesage/docker-firefox/releases/latest --jq '.tag_name')
+          # Get latest release from jlesage/docker-chromium
+          LATEST_TAG=$(gh api repos/jlesage/docker-chromium/releases/latest --jq '.tag_name')
           echo "Latest upstream: $LATEST_TAG"
 
-          BRANCH_NAME="update-upstream-$LATEST_TAG"
+          BRANCH_NAME="update-upstream-chromium-$LATEST_TAG"
 
           echo "latest_tag=$LATEST_TAG" >> $GITHUB_OUTPUT
           echo "branch_name=$BRANCH_NAME" >> $GITHUB_OUTPUT
 
           # Check tracked version
-          TRACKED=$(cat .upstream-version-firefox 2>/dev/null || echo "none")
+          TRACKED=$(cat .upstream-version-chromium 2>/dev/null || echo "none")
           echo "Currently tracking: $TRACKED"
           echo "tracked_version=$TRACKED" >> $GITHUB_OUTPUT
 
@@ -109,64 +109,59 @@ jobs:
           claude_args: |
             --allowedTools "Read,Edit,Write,Glob,Grep,WebFetch,Bash"
           prompt: |
-            A new version of jlesage/docker-firefox has been released: ${{ needs.check-upstream.outputs.latest_tag }}
+            A new version of jlesage/docker-chromium has been released: ${{ needs.check-upstream.outputs.latest_tag }}
             The currently tracked version is: ${{ needs.check-upstream.outputs.tracked_version }}
 
-            Please update this Home Assistant add-on to use the new upstream version.
+            Please update this Home Assistant add-on to use the new upstream version. This add-on lives in the `chromium/` folder.
 
             ## Step 1: Fetch upstream release notes (ALL intermediate releases)
 
             IMPORTANT: There may be MULTIPLE upstream releases between our tracked version (${{ needs.check-upstream.outputs.tracked_version }}) and the latest (${{ needs.check-upstream.outputs.latest_tag }}).
             You MUST fetch and include release notes for ALL intermediate versions, not just the latest one.
 
-            1. Fetch the list of all releases: https://api.github.com/repos/jlesage/docker-firefox/releases?per_page=20
+            1. Fetch the list of all releases: https://api.github.com/repos/jlesage/docker-chromium/releases?per_page=20
             2. Parse the JSON array and identify ALL releases that are NEWER than ${{ needs.check-upstream.outputs.tracked_version }} (up to and including ${{ needs.check-upstream.outputs.latest_tag }})
             3. For each intermediate release, extract the "tag_name" and "body" fields
             4. You MUST include the changes from ALL intermediate releases in the changelog entries later, not just the latest one
-            5. If a release contains significant Firefox-specific changes (not just baseimage updates), note this for version bumping decisions
+            5. If a release contains significant Chromium-specific changes (not just baseimage updates), note this for version bumping decisions
 
             ## Step 2: Check upstream changes for new environment variables
 
             Fetch and review the upstream README to check for any new environment variables:
-            - Fetch https://raw.githubusercontent.com/jlesage/docker-firefox/master/README.md
+            - Fetch https://raw.githubusercontent.com/jlesage/docker-chromium/master/README.md
             - Look at the "Environment Variables" section
-            - Compare with the current environment variables in firefox/DOCS.md and firefox/config.yaml
+            - Compare with the current environment variables in chromium/config.yaml and chromium/translations/en.yaml
+            - Note that this add-on uses the CHROMIUM_* variables (e.g. CHROMIUM_APP_URL, CHROMIUM_CUSTOM_ARGS, CHROMIUM_REMOTE_DEBUGGING, CHROMIUM_REMOTE_DEBUGGING_PORT) plus the shared baseimage variables
 
             ## Step 3: Update files
 
-            1. **firefox/build.yaml**: Update the build_from image tags to use ${{ needs.check-upstream.outputs.latest_tag }}
+            1. **chromium/Dockerfile**: Update the `FROM jlesage/chromium:<tag>` line to use ${{ needs.check-upstream.outputs.latest_tag }}
 
-            2. **firefox/config.yaml**:
+            2. **chromium/config.yaml**:
               - Bump the `version` field to the new add-on version. This is the version that Home Assistant advertises to users, and the builder tags the published image with it, so it must be set here in this PR.
               - Determine the new version following these rules:
-                - PATCH version (e.g., 1.9.0 → 1.9.1): for upstream updates that only contain baseimage changes
-                - MINOR version (e.g., 1.9.0 → 1.10.0): when new environment variables are added OR the upstream release contains Firefox-specific changes
+                - PATCH version (e.g., 1.0.0 → 1.0.1): for upstream updates that only contain baseimage changes
+                - MINOR version (e.g., 1.0.0 → 1.1.0): when new environment variables are added OR the upstream release contains Chromium-specific changes
               - If there are NEW environment variables in upstream that are not yet in the addon, add them to the `schema` and `options` sections following the existing pattern
 
-            3. **firefox/DOCS.md**:
-               - If there are NEW environment variables, add them to the Configuration section following the existing table format and descriptions
-
-            4. **firefox/translations/en.yaml** (and other translation files in firefox/translations/):
+            3. **chromium/translations/en.yaml**:
                - If there are NEW environment variables, add their name and description translations following the existing pattern
                - Check the structure of existing entries and replicate it for new variables
 
-            5. **firefox/CHANGELOG.md**:
+            4. **chromium/CHANGELOG.md**:
                - Add a new entry documenting the upstream update
                - IMPORTANT: Include the changes from ALL intermediate upstream releases you fetched in Step 1 (from ${{ needs.check-upstream.outputs.tracked_version }} to ${{ needs.check-upstream.outputs.latest_tag }}), not just the latest release
-               - Format: "Base image update: jlesage/docker-firefox to ${{ needs.check-upstream.outputs.latest_tag }}" followed by the combined upstream changes from all intermediate releases
-               - Look at previous changelog entries (e.g., 1.7.0, 1.8.0) to see how upstream changes are formatted
+               - Format: "Base image update: jlesage/docker-chromium to ${{ needs.check-upstream.outputs.latest_tag }}" followed by the combined upstream changes from all intermediate releases
                - If new environment variables were added, mention them in the changelog
 
-            6. **.upstream-version-firefox**: Update to ${{ needs.check-upstream.outputs.latest_tag }}
-
-            7. Check **firefox_edge/** folder for similar updates if needed (build.yaml, config.yaml — including its own `version` bump, translations/, DOCS.md, CHANGELOG.md)
+            5. **.upstream-version-chromium**: Update to ${{ needs.check-upstream.outputs.latest_tag }}
 
             ## Important
 
             - Look at the git history and existing file formats to follow the same patterns
             - For new environment variables, follow the naming convention and structure used in previous commits
             - Only add environment variables that make sense for Home Assistant users
-            - Make sure translations are consistent across all translation files
+            - Do NOT touch the firefox/ or firefox_edge/ add-ons — they track a different upstream (jlesage/docker-firefox)
             - Provide a summary of what was changed, especially if new environment variables were added
 
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
@@ -191,7 +186,7 @@ jobs:
           rm -f output.txt
 
           git add -A
-          git commit -m "chore: update to upstream docker-firefox $VERSION"
+          git commit -m "chore: update to upstream docker-chromium $VERSION"
 
           # Set up authenticated remote URL
           git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git"
@@ -211,17 +206,17 @@ jobs:
           TRACKED="${{ needs.check-upstream.outputs.tracked_version }}"
 
           PR_URL=$(gh pr create \
-            --title "🔄 Update to jlesage/docker-firefox $VERSION" \
+            --title "🔄 Update to jlesage/docker-chromium $VERSION" \
             --body "## Automated Upstream Sync
 
-          **New upstream release:** [\`$VERSION\`](https://github.com/jlesage/docker-firefox/releases/tag/$VERSION)
+          **New upstream release:** [\`$VERSION\`](https://github.com/jlesage/docker-chromium/releases/tag/$VERSION)
           **Previous tracked version:** \`$TRACKED\`
 
-          This PR updates the Firefox Home Assistant add-on to use the latest upstream Docker image.
+          This PR updates the Chromium Home Assistant add-on to use the latest upstream Docker image.
           All intermediate releases between \`$TRACKED\` and \`$VERSION\` are included in the changelog.
 
           ### Checklist
-          - [ ] Review the changes in \`firefox/\` folder
+          - [ ] Review the changes in \`chromium/\` folder
           - [ ] Check CHANGELOG.md entry covers all intermediate releases
           - [ ] Verify new environment variables (if any)
 

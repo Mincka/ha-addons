@@ -1,15 +1,12 @@
 name: Builder
 
 env:
-  BUILD_ARGS: "--test"
-  MONITORED_FILES: "build.yaml config.yaml Dockerfile rootfs"
+  MONITORED_FILES: "config.yaml Dockerfile rootfs"
 
 on:
   push:
     branches:
       - main
-    paths-ignore:
-      - '**/config.yaml'
   pull_request:
     branches:
       - main
@@ -74,10 +71,17 @@ jobs:
 
   build:
     needs: init
-    runs-on: ubuntu-latest
     if: needs.init.outputs.changed == 'true'
     name: Build ${{ matrix.arch }} ${{ matrix.addon }} add-on
+    # Build each architecture natively (no QEMU): amd64 on an x86 runner,
+    # aarch64 on an ARM runner.
+    runs-on: ${{ matrix.arch == 'aarch64' && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
     strategy:
+      fail-fast: false
       matrix:
         addon: ${{ fromJson(needs.init.outputs.changed_addons) }}
         arch: ["aarch64", "amd64"]
@@ -92,90 +96,50 @@ jobs:
         with:
           path: "./${{ matrix.addon }}"
 
-      - name: Check if add-on should be built
-        id: check
+      - name: Prepare build parameters
+        id: prep
         run: |
-          if [[ "${{ steps.info.outputs.architectures }}" =~ ${{ matrix.arch }} ]]; then
-             echo "build_arch=true" >> $GITHUB_OUTPUT;
-             echo "image=$(echo ${{ steps.info.outputs.image }} | cut -d'/' -f3)" >> $GITHUB_OUTPUT;
-             if [[ -z "${{ github.head_ref }}" ]] && [[ "${{ github.event_name }}" == "push" || "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-                 echo "BUILD_ARGS=" >> $GITHUB_ENV;
-             fi
-           else
-             echo "${{ matrix.arch }} is not a valid arch for ${{ matrix.addon }}, skipping build";
-             echo "build_arch=false" >> $GITHUB_OUTPUT;
+          # Skip arches the add-on doesn't declare.
+          if [[ ! "${{ steps.info.outputs.architectures }}" =~ ${{ matrix.arch }} ]]; then
+            echo "${{ matrix.arch }} is not a valid arch for ${{ matrix.addon }}, skipping build"
+            echo "build_arch=false" >> "$GITHUB_OUTPUT"
+            exit 0
           fi
+          echo "build_arch=true" >> "$GITHUB_OUTPUT"
 
-      - name: Login to GitHub Container Registry
-        if: env.BUILD_ARGS != '--test'
-        uses: docker/login-action@v4.4.0
-        with:
-          registry: ghcr.io
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          # Resolve the per-arch image name from config.yaml's {arch} template.
+          IMAGE="${{ steps.info.outputs.image }}"
+          IMAGE="${IMAGE/\{arch\}/${{ matrix.arch }}}"
+          echo "image=$IMAGE" >> "$GITHUB_OUTPUT"
 
-      - name: Pre-pull builder image with retry
-        if: steps.check.outputs.build_arch == 'true'
-        run: |
-          IMAGE="ghcr.io/home-assistant/amd64-builder:2026.03.2"
-          for i in $(seq 1 50); do
-            echo "Attempt $i to pull $IMAGE..."
-            docker pull "$IMAGE" && break
-            echo "Failed, waiting 5s..."
-            sleep 5
-          done
-          docker image inspect "$IMAGE" > /dev/null 2>&1 || exit 1
+          # The info helper preserves the surrounding quotes from
+          # config.yaml's `version: "x.y.z"`; strip them so the tag is valid.
+          VERSION="${{ steps.info.outputs.version }}"
+          VERSION="${VERSION%\"}"
+          VERSION="${VERSION#\"}"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+          # Push (and advertise) only on a real push to main or a manual run;
+          # pull requests are test-only builds that never touch the registry.
+          if [[ "${{ github.event_name }}" == "push" || "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "push=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "push=false" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Build ${{ matrix.addon }} add-on
-        if: steps.check.outputs.build_arch == 'true'
-        uses: home-assistant/builder@2026.03.2
+        if: steps.prep.outputs.build_arch == 'true'
+        uses: home-assistant/builder/actions/build-image@2026.06.0
         with:
-          args: |
-            ${{ env.BUILD_ARGS }} \
-            --no-cosign-verify \
-            --${{ matrix.arch }} \
-            --target /data/${{ matrix.addon }} \
-            --image "${{ steps.check.outputs.image }}" \
-            --docker-hub "ghcr.io/${{ github.repository_owner }}" \
-            --addon
-
-  bump-version:
-    needs: build
-    if: needs.build.result == 'success' && github.event_name != 'pull_request'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v7
-
-      - name: Bump version in config.yaml from .next-version files
-        run: |
-          changed=false
-
-          for addon_dir in firefox firefox_edge; do
-            next_version_file="$addon_dir/.next-version"
-            if [[ -f "$next_version_file" ]]; then
-              NEW_VERSION=$(cat "$next_version_file" | tr -d '[:space:]')
-              CURRENT_VERSION=$(grep -E '^version:' "$addon_dir/config.yaml" | sed 's/version:[[:space:]]*//' | tr -d '"' | tr -d "'")
-
-              if [[ "$NEW_VERSION" != "$CURRENT_VERSION" ]]; then
-                echo "Bumping $addon_dir from $CURRENT_VERSION to $NEW_VERSION"
-                sed -i "s/^version:.*/version: \"$NEW_VERSION\"/" "$addon_dir/config.yaml"
-                rm -f "$next_version_file"
-                changed=true
-              else
-                echo "$addon_dir already at version $NEW_VERSION"
-              fi
-            fi
-          done
-
-          if [[ "$changed" == "true" ]]; then
-            git config user.name "github-actions[bot]"
-            git config user.email "github-actions[bot]@users.noreply.github.com"
-            git add -A
-            git commit -m "chore: bump version after successful build"
-            git push
-          else
-            echo "No version bump needed"
-          fi
+          arch: ${{ matrix.arch }}
+          image: ${{ steps.prep.outputs.image }}
+          image-tags: |
+            ${{ steps.prep.outputs.version }}
+            latest
+          version: ${{ steps.prep.outputs.version }}
+          context: ./${{ matrix.addon }}
+          file: ./${{ matrix.addon }}/Dockerfile
+          push: ${{ steps.prep.outputs.push }}
+          cosign: "false"
+          cache-gha-scope: ${{ matrix.addon }}-${{ matrix.arch }}
+          container-registry-password: ${{ secrets.GITHUB_TOKEN }}
