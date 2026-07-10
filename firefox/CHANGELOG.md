@@ -2,6 +2,8 @@
 
 ## 1.12.0
 
+- New: a Chromium add-on is now also available in this repository, if you'd
+  prefer a Chromium-based browser.
 - Security hardening:
   - Firefox now runs as an unprivileged user instead of root. The profile and
     downloads are remapped onto Home Assistant's persistent storage during
