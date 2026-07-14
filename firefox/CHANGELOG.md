@@ -7,6 +7,9 @@
   - Fixed regression causing container startup failure when the container
     engine automatically mounts files under `/run`.
   - Read-only filesystem support now requires exposing `/run` as a tmpfs.
+- Removed the add-on's custom tmp-clear init script. It worked around the
+  v26.07.1 startup failure on Home Assistant's bind-mounts, which baseimage
+  4.12.6 now fixes upstream, so the stock script is used again.
 
 ## 1.12.0
 
