@@ -1,5 +1,5 @@
 name: "Chromium"
-version: "1.0.0"
+version: "1.1.0"
 slug: "chromium"
 panel_icon: "mdi:google-chrome"
 description: Docker container for Chromium
