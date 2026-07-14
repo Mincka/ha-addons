@@ -1,5 +1,16 @@
 <!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 
+## 1.12.1
+
+- Base image update: jlesage/docker-firefox to v26.07.2
+- Updated baseimage to version 4.12.6:
+  - Fixed regression causing container startup failure when the container
+    engine automatically mounts files under `/run`.
+  - Read-only filesystem support now requires exposing `/run` as a tmpfs.
+- Removed the add-on's custom tmp-clear init script. It worked around the
+  v26.07.1 startup failure on Home Assistant's bind-mounts, which baseimage
+  4.12.6 now fixes upstream, so the stock script is used again.
+
 ## 1.12.0
 
 - New: a Chromium add-on is now also available in this repository, if you'd
