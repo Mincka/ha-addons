@@ -2,7 +2,7 @@ name: Check Upstream Chromium Release
 
 on:
   schedule:
-    - cron: '30 6 * * *'  # Daily at 6:30 AM UTC
+    - cron: '53 4 * * *'  # Daily at 4:53 AM UTC (off-peak minute to reduce scheduling delay)
   workflow_dispatch:      # Manual trigger
 
 # Prevent concurrent runs
