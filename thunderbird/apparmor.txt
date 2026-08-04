@@ -1,0 +1,61 @@
+#include <tunables/global>
+
+# Hardened AppArmor profile for the Thunderbird Home Assistant add-on.
+#
+# The profile name MUST match the add-on slug ("thunderbird"), otherwise the
+# Supervisor cannot load it.
+#
+# Thunderbird runs as an unprivileged user (the profile remap happens at init)
+# and does not need the SYS_ADMIN capability, so this profile mirrors the
+# Firefox one: it grants only Docker's default capability set plus sys_ptrace
+# (the crash reporter). File access is left broad because the s6 init and the
+# application touch files all over the image; the hardening is in the
+# capability restriction and the denials below.
+#
+# NOTE: this cannot be validated in CI (the build host has no AppArmor LSM). If
+# the add-on fails to start, inspect the host log for the denial
+# (`dmesg | grep -i 'apparmor="DENIED".*profile="thunderbird"'`) and widen the
+# offending rule. Last resort: add `apparmor: false` to config.yaml.
+profile thunderbird flags=(attach_disconnected,mediate_deleted) {
+  #include <abstractions/base>
+  #include <abstractions/nameservice>
+
+  # Thunderbird needs full network access (IMAP, SMTP, HTTP, ...).
+  network,
+
+  # Capabilities — Docker's default set (present in every add-on container)
+  # plus sys_ptrace for the crash reporter. Notably this does NOT grant
+  # sys_admin, sys_module, sys_rawio, etc.
+  capability setuid,        # init drops privileges to the app user
+  capability setgid,
+  capability setpcap,       # init drops capabilities
+  capability setfcap,
+  capability chown,         # take ownership of /config, /data
+  capability fowner,
+  capability fsetid,
+  capability dac_override,
+  capability kill,          # supervisor stops services
+  capability mknod,         # device nodes
+  capability sys_chroot,    # Thunderbird content sandbox
+  capability net_bind_service,
+  capability net_raw,
+  capability audit_write,
+  capability sys_ptrace,    # Thunderbird crash reporter
+
+  # Thunderbird's content sandbox sets up private mounts inside a namespace.
+  mount,
+  umount,
+  pivot_root,
+  ptrace (read, trace) peer=thunderbird,
+  signal (send, receive) peer=thunderbird,
+  signal (send) set=(kill,term,int,hup,cont,usr1,usr2),
+
+  # Broad file access (read/write/exec/mmap). The denials below carve out the
+  # clearly out-of-scope, sensitive locations.
+  file,
+
+  # Hardening denials — take precedence over the broad `file` rule above.
+  deny /root/** rwklx,
+  deny @{PROC}/sysrq-trigger rwklx,
+  deny /sys/kernel/security/** rwklx,
+}

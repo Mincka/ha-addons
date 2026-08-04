@@ -37,6 +37,13 @@ If you don’t need the very latest version of Firefox, it’s fine to stay on t
 
 _Run Chromium as a browser inside Home Assistant to access local or external web sites from your home._
 
+### [Thunderbird](./thunderbird)
+
+![Supports aarch64 Architecture][aarch64-shield]
+![Supports amd64 Architecture][amd64-shield]
+
+_Run Thunderbird as an email client inside Home Assistant to access your mailboxes from your home._
+
 ## Support
 Got questions?
 
