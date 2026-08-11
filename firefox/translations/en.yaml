@@ -50,9 +50,15 @@ configuration:
   WEB_AUDIO:
     name: Web Audio
     description: When set to 1, audio support is enabled, meaning that any audio produced by the application is played through the browser. Don't forget to also enable audio in the VNC docked console. Note that audio is not supported for VNC clients, nor HA Ingress. Please tell me if you find a way to make it work through HA ingress.
+  WEB_HOST_CLIPBOARD_SYNC:
+    name: Web Host Clipboard Sync
+    description: When set to 1, enables synchronizing the host system clipboard with the application when accessed via a web browser. Actual availability still depends on the browser (Chromium-based engines only) and requires a secure connection (HTTPS). Not available for VNC clients.
   WEB_AUTHENTICATION:
     name: Web Authentication
     description: When set to 1, the application' GUI is protected via a login page when accessed via a web browser. Access is allowed only when providing valid credentials. This feature requires secure connection (SECURE_CONNECTION environment variable) to be enabled. This may not be compatible with HA ingress (even in HTTPS).
+  WEB_AUTHENTICATION_ALLOW_INSECURE:
+    name: Web Authentication Allow Insecure
+    description: When set to 1, allows web authentication without SECURE_CONNECTION being enabled. Not recommended, as credentials and session tokens may travel in cleartext. Use only if you fully understand the risks, for example when a reverse proxy already handles HTTPS in front of this add-on.
   WEB_AUTHENTICATION_USERNAME:
     name: Web Authentication Username
     description: Optional username to configure for the web authentication. This is a quick and easy way to configure credentials for a single user.
