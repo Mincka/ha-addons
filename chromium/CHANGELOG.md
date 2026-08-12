@@ -1,5 +1,21 @@
 <!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 
+## 1.3.0
+
+- Base image update: jlesage/docker-chromium to v26.08.1.
+  - Updated Chromium to version 151.0.7922.108-r0.
+  - Updated baseimage to version 4.13.1, bringing the following changes:
+    - Host clipboard sync can now be controlled via environment variable and
+      web UI toggle.
+    - Improved reliability and security of the web interface.
+    - Improved reliability and security of services.
+- Added new environment variables:
+  - WEB_HOST_CLIPBOARD_SYNC: Enable/disable synchronizing the host system
+    clipboard with the application (Chromium-based browsers only).
+  - WEB_AUTHENTICATION_ALLOW_INSECURE: Allow web authentication without
+    SECURE_CONNECTION being enabled (not recommended, useful behind a reverse
+    proxy that already terminates HTTPS).
+
 ## 1.2.0
 
 - Base image update: jlesage/docker-chromium to v26.07.3.
