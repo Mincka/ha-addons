@@ -1,4 +1,4 @@
-FROM jlesage/thunderbird:v26.08.1
+FROM jlesage/thunderbird:v26.08.2
 
 LABEL \
   org.opencontainers.image.title="Thunderbird Home Assistant Add-on" \

@@ -1,5 +1,10 @@
 <!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 
+## 1.1.1
+
+- Base image update: jlesage/docker-thunderbird to v26.08.2
+- Updated baseimage to version 4.13.2.
+
 ## 1.1.0
 
 - Base image update: jlesage/docker-thunderbird to v26.08.1
