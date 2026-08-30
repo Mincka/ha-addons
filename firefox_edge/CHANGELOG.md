@@ -1,5 +1,10 @@
 <!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 
+## 1.13.2
+
+- Base image update: jlesage/docker-firefox to v26.08.3
+  - Fixed Firefox uploads stalling at 2GiB.
+
 ## 1.13.1
 
 - Base image update: jlesage/docker-firefox to v26.08.2
