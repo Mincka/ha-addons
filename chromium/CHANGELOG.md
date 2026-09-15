@@ -1,5 +1,10 @@
 <!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 
+## 1.5.0
+
+- Base image update: jlesage/docker-chromium to v26.09.1.
+  - Updated Chromium to version 152.0.7977.82-r0.
+
 ## 1.4.0
 
 - Base image update: jlesage/docker-chromium to v26.08.3.
