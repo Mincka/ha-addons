@@ -129,7 +129,7 @@ jobs:
 
       - name: Build ${{ matrix.addon }} add-on
         if: steps.prep.outputs.build_arch == 'true'
-        uses: home-assistant/builder/actions/build-image@2026.06.0
+        uses: home-assistant/builder/actions/build-image@2026.09.0
         with:
           arch: ${{ matrix.arch }}
           image: ${{ steps.prep.outputs.image }}
