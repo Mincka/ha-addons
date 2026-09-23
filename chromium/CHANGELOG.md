@@ -1,5 +1,13 @@
 <!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 
+## 1.5.1
+
+- Base image update: jlesage/docker-chromium to v26.09.2.
+  - Updated baseimage to version 4.14.0, bringing the following changes:
+    - The web interface can now be installed as an application on a computer
+      or phone.
+    - Fixed host clipboard synchronization disabling itself.
+
 ## 1.5.0
 
 - Base image update: jlesage/docker-chromium to v26.09.1.
