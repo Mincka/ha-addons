@@ -1,4 +1,4 @@
-FROM jlesage/firefox:v26.08.3
+FROM jlesage/firefox:v26.09.1
 
 LABEL \
   org.opencontainers.image.title="Firefox Home Assistant Add-on (Edge)" \
