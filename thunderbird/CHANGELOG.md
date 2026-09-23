@@ -1,5 +1,13 @@
 <!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 
+## 1.1.2
+
+- Base image update: jlesage/docker-thunderbird to v26.09.1
+- Updated baseimage to version 4.14.0:
+  - The web interface can now be installed as an application on a computer or
+    phone.
+  - Fixed host clipboard synchronization disabling itself.
+
 ## 1.1.1
 
 - Base image update: jlesage/docker-thunderbird to v26.08.2
