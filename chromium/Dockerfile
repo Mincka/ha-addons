@@ -1,4 +1,4 @@
-FROM jlesage/chromium:v26.09.2
+FROM jlesage/chromium:v26.10.1
 
 LABEL \
   org.opencontainers.image.title="Chromium Home Assistant Add-on" \
