@@ -1,5 +1,13 @@
 <!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 
+## 1.6.1
+
+- GPU hardware acceleration: the add-on now requests video hardware access
+  (`video: true`), so the X server can use the host GPU (`/dev/dri`) instead of
+  software rendering (`llvmpipe`). Requires an open-source kernel driver
+  (Intel `i915`, AMD `amdgpu` or `nouveau`); proprietary NVIDIA drivers are not
+  supported. Hosts without a GPU are unaffected.
+
 ## 1.6.0
 
 - Base image update: jlesage/docker-chromium to v26.10.1.

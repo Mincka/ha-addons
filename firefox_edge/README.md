@@ -30,6 +30,10 @@ Just install, start the container and click on "Open Web UI". You can use "Show 
 
 The underlying image includes an integrated web file manager and a web terminal. Both are disabled by default and can be enabled from the add-on's Configuration tab (`WEB_FILE_MANAGER` and `WEB_TERMINAL`).
 
+## GPU acceleration
+
+The add-on is granted access to the host GPU (`/dev/dri`), so the display can be rendered with hardware acceleration instead of software rendering. This requires an open-source kernel driver on the host (Intel `i915`, AMD `amdgpu` or `nouveau`); proprietary NVIDIA drivers are not supported. The add-on log reports at startup whether the GPU was detected and usable. See the [upstream documentation](https://github.com/jlesage/docker-firefox#gpu-acceleration-support) for details.
+
 ## Downloads
 
 The files downloaded in Firefox are automatically stored to your `/share/firefox` folder.
