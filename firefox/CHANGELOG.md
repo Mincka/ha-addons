@@ -1,5 +1,10 @@
 <!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 
+## 1.14.0
+
+- Base image update: jlesage/docker-firefox to v26.11.1
+  - Updated Firefox to version 160.0-r0.
+
 ## 1.13.4
 
 - GPU hardware acceleration: the add-on now requests video hardware access
