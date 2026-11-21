@@ -1,5 +1,5 @@
 name: "Chromium"
-version: "1.6.1"
+version: "1.7.0"
 slug: "chromium"
 panel_icon: "mdi:google-chrome"
 description: Docker container for Chromium
@@ -31,8 +31,6 @@ devices:
   - /dev/snd
 # Map a working PulseAudio setup into the container
 audio: true
-# Allow access to the GPU (/dev/dri) for hardware-accelerated rendering
-video: true
 image: "ghcr.io/mincka/chromium-{arch}"
 # To pass options as environment variables (thanks to legacy mode), they must be either "int" or "str" ("str?" will be ignored).
 legacy: true
