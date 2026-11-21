@@ -2,6 +2,9 @@
 
 ## 1.7.0
 
+- Reverted GPU hardware acceleration (`video: true`, added in 1.6.1): it brought
+  no noticeable improvement and caused higher CPU usage and sluggishness on some
+  hosts (#138). The add-on uses software rendering again, as in 1.6.0.
 - Base image update: jlesage/docker-chromium to v26.11.1.
   - Updated Chromium to version 156.0.8078.79-r0.
 
