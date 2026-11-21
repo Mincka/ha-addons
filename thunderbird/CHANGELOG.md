@@ -1,5 +1,11 @@
 <!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 
+## 1.1.4
+
+- Reverted GPU hardware acceleration (`video: true`, added in 1.1.3): it brought
+  no noticeable improvement and caused higher CPU usage and sluggishness on some
+  hosts (#138). The add-on uses software rendering again, as in 1.1.2.
+
 ## 1.1.3
 
 - GPU hardware acceleration: the add-on now requests video hardware access
