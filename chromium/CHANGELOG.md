@@ -1,5 +1,10 @@
 <!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 
+## 1.7.1
+
+- Base image update: jlesage/docker-chromium to v26.11.2.
+  - Updated Chromium to version 158.0.8127.36-r0.
+
 ## 1.7.0
 
 - Reverted GPU hardware acceleration (`video: true`, added in 1.6.1): it brought
