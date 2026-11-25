@@ -1,5 +1,19 @@
 <!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 
+## 1.1.5
+
+- Base image update: jlesage/docker-thunderbird to v26.11.1
+- Updated baseimage to version 4.15.0:
+  - Added web microphone support.
+  - Added H.264 encoding for moving screens in the web interface.
+  - Web audio now uses a 48000 Hz sample rate and skips near-silent audio.
+  - The web interface now displays the browser's own mouse pointer and
+    updates the screen more responsively.
+  - Fixed a one-pixel border above the main window.
+  - Fixed the main window un-maximizing on Alt+drag.
+  - Fixed web audio staying off after reconnecting.
+  - Fixed idle JPEG refreshes delaying the next interaction.
+
 ## 1.1.4
 
 - Reverted GPU hardware acceleration (`video: true`, added in 1.1.3): it brought
