@@ -176,7 +176,9 @@ jobs:
                  name and description EXACTLY, so every add-on uses the same wording.
                - Otherwise follow the style of the existing descriptions: for a 0/1 flag start with "When set to 1, ...".
                  The first sentence must say what the option does (it is copied into the CHANGELOG), then requirements
-                 (e.g. secure connection), then limitations (VNC clients, HA Ingress) when they apply.
+                 (e.g. secure connection), then limitations. Only state requirements and limitations that the upstream
+                 README documents (e.g. "Not supported for VNC clients."): do not infer others, such as HA Ingress
+                 support, from similar options.
             4. If there is nothing new, change nothing.
 
             Finish with a short summary of the options you added, or say that there were none.
