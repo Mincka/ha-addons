@@ -161,6 +161,8 @@ jobs:
             - Look at the git history and existing file formats to follow the same patterns
             - For new environment variables, follow the naming convention and structure used in previous commits
             - Only add environment variables that make sense for Home Assistant users
+            - In option descriptions, only state requirements and limitations that the upstream README documents
+              (e.g. "Not supported for VNC clients."); do not infer others, such as HA Ingress support, from similar options
             - Do NOT touch the firefox/ or firefox_edge/ add-ons — they track a different upstream (jlesage/docker-firefox)
             - Provide a summary of what was changed, especially if new environment variables were added
 
