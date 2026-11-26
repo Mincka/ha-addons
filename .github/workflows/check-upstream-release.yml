@@ -1,236 +1,241 @@
-name: Check Upstream Firefox Release
+name: Check Upstream Releases
+
+# One workflow for every add-on that tracks a jlesage/docker-* image, so all
+# update PRs follow the same format. Claude only adds new options (config.yaml
+# + translations); .github/scripts/upstream_sync.py generates everything else
+# (Dockerfile tag, version bump, CHANGELOG entry, PR body) and fails if Claude
+# touched anything outside that scope.
 
 on:
   schedule:
     - cron: '47 4 * * *'  # Daily at 4:47 AM UTC (off-peak minute to reduce scheduling delay)
-  workflow_dispatch:      # Manual trigger
-
-# Prevent concurrent runs
-concurrency:
-  group: upstream-firefox-check
-  cancel-in-progress: false
+  workflow_dispatch:
+    inputs:
+      addon:
+        description: Add-on to check
+        type: choice
+        options: [all, firefox, chromium, thunderbird]
+        default: all
+      dry_run:
+        description: Generate the update and show the diff, without pushing or opening a PR
+        type: boolean
+        default: false
 
 jobs:
-  check-upstream:
-    runs-on: ubuntu-latest
-    outputs:
-      should_update: ${{ steps.check.outputs.should_update }}
-      latest_tag: ${{ steps.check.outputs.latest_tag }}
-      tracked_version: ${{ steps.check.outputs.tracked_version }}
-      branch_name: ${{ steps.check.outputs.branch_name }}
-    steps:
-      - uses: actions/checkout@v7
-
-      - name: Check for new upstream release
-        id: check
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          # Get latest release from jlesage/docker-firefox
-          LATEST_TAG=$(gh api repos/jlesage/docker-firefox/releases/latest --jq '.tag_name')
-          echo "Latest upstream: $LATEST_TAG"
-
-          BRANCH_NAME="update-upstream-$LATEST_TAG"
-
-          echo "latest_tag=$LATEST_TAG" >> $GITHUB_OUTPUT
-          echo "branch_name=$BRANCH_NAME" >> $GITHUB_OUTPUT
-
-          # Check tracked version
-          TRACKED=$(cat .upstream-version-firefox 2>/dev/null || echo "none")
-          echo "Currently tracking: $TRACKED"
-          echo "tracked_version=$TRACKED" >> $GITHUB_OUTPUT
-
-          if [ "$LATEST_TAG" != "$TRACKED" ]; then
-            echo "🆕 New release detected!"
-            echo "should_update=true" >> $GITHUB_OUTPUT
-          else
-            echo "✅ Already up to date"
-            echo "should_update=false" >> $GITHUB_OUTPUT
-          fi
-
-  update-addon:
-    needs: check-upstream
-    if: needs.check-upstream.outputs.should_update == 'true'
+  update:
+    name: ${{ matrix.addon }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
       pull-requests: write
       issues: write
       id-token: write
+    strategy:
+      fail-fast: false
+      # Sequential, so a later add-on sees the options an earlier one just added
+      # on its update branch and reuses the same default and wording.
+      max-parallel: 1
+      matrix:
+        include:
+          - addon: firefox
+            extra: firefox_edge
+            app: Firefox
+            upstream: jlesage/docker-firefox
+            app_vars: the FF_* variables (FF_OPEN_URL, FF_KIOSK, FF_CUSTOM_ARGS)
+          - addon: chromium
+            extra: ''
+            app: Chromium
+            upstream: jlesage/docker-chromium
+            app_vars: the CHROMIUM_* variables (CHROMIUM_APP_URL, CHROMIUM_CUSTOM_ARGS, CHROMIUM_REMOTE_DEBUGGING, CHROMIUM_REMOTE_DEBUGGING_PORT)
+          - addon: thunderbird
+            extra: ''
+            app: Thunderbird
+            upstream: jlesage/docker-thunderbird
+            app_vars: no app-specific variables
+    concurrency:
+      group: upstream-${{ matrix.addon }}
+      cancel-in-progress: false
+    env:
+      ADDON: ${{ matrix.addon }}
+      EXTRA: ${{ matrix.extra }}
+      APP: ${{ matrix.app }}
+      UPSTREAM: ${{ matrix.upstream }}
+      VERSION_FILE: .upstream-version-${{ matrix.addon }}
+      DRY_RUN: ${{ inputs.dry_run == true }}
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
+      - name: Select add-on
+        id: select
+        env:
+          SELECTED: ${{ inputs.addon || 'all' }}
+        run: |
+          if [ "$SELECTED" != "all" ] && [ "$SELECTED" != "$ADDON" ]; then
+            echo "Skipping $ADDON (only $SELECTED was requested)"
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [ "$DRY_RUN" != "true" ] && [ "$GITHUB_REF" != "refs/heads/${{ github.event.repository.default_branch }}" ]; then
+            echo "::error::A real run must start from the default branch; use dry_run on other branches."
+            exit 1
+          fi
+          echo "enabled=true" >> "$GITHUB_OUTPUT"
+
       - uses: actions/checkout@v7
+        if: steps.select.outputs.enabled == 'true'
         with:
           fetch-depth: 0
           persist-credentials: true
 
-      - name: Check if PR already exists or was skipped
-        id: pr_check
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Check for new upstream release
+        id: check
+        if: steps.select.outputs.enabled == 'true'
         run: |
-          BRANCH_NAME="${{ needs.check-upstream.outputs.branch_name }}"
+          LATEST=$(gh api "repos/$UPSTREAM/releases/latest" --jq '.tag_name')
+          TRACKED=$(cat "$VERSION_FILE" 2>/dev/null || echo "none")
+          TITLE="🔄 Update to $UPSTREAM $LATEST"
+          echo "Latest upstream: $LATEST / tracked: $TRACKED"
+          {
+            echo "latest=$LATEST"
+            echo "tracked=$TRACKED"
+            echo "title=$TITLE"
+            echo "branch=update-upstream-$ADDON-$LATEST"
+          } >> "$GITHUB_OUTPUT"
 
-          # Check for open PR
-          OPEN_PR=$(gh pr list --head "$BRANCH_NAME" --state open --json number --jq '.[0].number // empty')
-          if [ -n "$OPEN_PR" ]; then
-            echo "PR #$OPEN_PR already open for branch $BRANCH_NAME"
-            echo "skip=true" >> $GITHUB_OUTPUT
+          if [ "$LATEST" = "$TRACKED" ]; then
+            echo "✅ Already up to date"
+            echo "should_update=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
-          # Check for closed PR (not merged = intentionally skipped)
-          CLOSED_PR=$(gh pr list --head "$BRANCH_NAME" --state closed --json number,mergedAt --jq '.[] | select(.mergedAt == null) | .number' | head -1)
-          if [ -n "$CLOSED_PR" ]; then
-            echo "PR #$CLOSED_PR was closed without merge - skipping this version"
-            echo "skip=true" >> $GITHUB_OUTPUT
-            exit 0
+          # PRs are matched by title, so older branch names still count.
+          PRS=$(gh pr list --state all --limit 200 --json number,title,state,mergedAt)
+          OPEN=$(jq -r --arg t "$TITLE" '[.[] | select(.title == $t and .state == "OPEN")][0].number // empty' <<<"$PRS")
+          SKIPPED=$(jq -r --arg t "$TITLE" '[.[] | select(.title == $t and .state == "CLOSED" and .mergedAt == null)][0].number // empty' <<<"$PRS")
+          if [ "$DRY_RUN" = "true" ]; then
+            echo "🧪 Dry run: generating the update for $LATEST (existing PRs: ${OPEN:-none} open, ${SKIPPED:-none} skipped)"
+            echo "should_update=true" >> "$GITHUB_OUTPUT"
+          elif [ -n "$OPEN" ]; then
+            echo "PR #$OPEN is already open for $LATEST"
+            echo "should_update=false" >> "$GITHUB_OUTPUT"
+          elif [ -n "$SKIPPED" ]; then
+            echo "PR #$SKIPPED was closed without merge: skipping $LATEST"
+            echo "should_update=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "🆕 New release to integrate"
+            echo "should_update=true" >> "$GITHUB_OUTPUT"
           fi
 
-          echo "No existing or skipped PR found for branch $BRANCH_NAME"
-          echo "skip=false" >> $GITHUB_OUTPUT
-
-      - name: Setup Git
-        if: steps.pr_check.outputs.skip != 'true'
+      - name: Prepare branch and context
+        id: prepare
+        if: steps.check.outputs.should_update == 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -b "${{ steps.check.outputs.branch }}"
+          echo "base_sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
-      - name: Create branch
-        if: steps.pr_check.outputs.skip != 'true'
-        run: |
-          BRANCH_NAME="${{ needs.check-upstream.outputs.branch_name }}"
-          git checkout -b "$BRANCH_NAME"
-          echo "BRANCH=$BRANCH_NAME" >> $GITHUB_ENV
+          # Options from other add-ons, including their open update branches.
+          git fetch --quiet origin '+refs/heads/update-upstream-*:refs/remotes/origin/update-upstream-*' || true
+          {
+            echo "known<<KNOWN_EOF"
+            python3 .github/scripts/upstream_sync.py known-options --addon "$ADDON"
+            echo "KNOWN_EOF"
+          } >> "$GITHUB_OUTPUT"
 
-      - name: Run Claude to update addon
-        if: steps.pr_check.outputs.skip != 'true'
+          if [ -n "$EXTRA" ]; then
+            echo "folders=\`$ADDON/\` and \`$EXTRA/\` (apply identical changes to both)" >> "$GITHUB_OUTPUT"
+          else
+            echo "folders=\`$ADDON/\`" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Add new upstream options (Claude)
+        if: steps.check.outputs.should_update == 'true'
         uses: anthropics/claude-code-action@v1
         with:
           claude_args: |
-            --allowedTools "Read,Edit,Write,Glob,Grep,WebFetch,Bash"
+            --allowedTools "Read,Edit,Glob,Grep,WebFetch"
           prompt: |
-            A new version of jlesage/docker-firefox has been released: ${{ needs.check-upstream.outputs.latest_tag }}
-            The currently tracked version is: ${{ needs.check-upstream.outputs.tracked_version }}
+            ${{ matrix.upstream }} released ${{ steps.check.outputs.latest }} (this repository tracks ${{ steps.check.outputs.tracked }}).
+            Add-on folder(s): ${{ steps.prepare.outputs.folders }}.
 
-            Please update this Home Assistant add-on to use the new upstream version.
+            Your ONLY task: expose in the add-on the environment variables that upstream introduced since ${{ steps.check.outputs.tracked }}.
+            A script runs after you and generates the Dockerfile tag, version bump, CHANGELOG entry and PR body.
+            It fails the run if you change any file other than config.yaml and translations/en.yaml in the folder(s) above.
+            Do NOT edit CHANGELOG.md, Dockerfile, the `version` field or .upstream-version-* files, and do NOT commit.
 
-            ## Step 1: Fetch upstream release notes (ALL intermediate releases)
+            1. Read the upstream release notes newer than ${{ steps.check.outputs.tracked }} (https://api.github.com/repos/${{ matrix.upstream }}/releases?per_page=20)
+               and the "Environment Variables" table of https://raw.githubusercontent.com/${{ matrix.upstream }}/master/README.md.
+            2. Compare with the `options:` block of ${{ matrix.addon }}/config.yaml. This add-on exposes ${{ matrix.app_vars }}
+               plus the shared baseimage variables. Only consider variables introduced by those new releases: older upstream
+               variables that are absent from config.yaml were left out on purpose.
+            3. For each new variable that makes sense for Home Assistant users:
+               - config.yaml: add it to `options` (upstream default, as a quoted string) and to `schema` (`str`), right after
+                 the most closely related existing option, at the same position in both blocks.
+               - translations/en.yaml: add `name` and `description` right after the same related option.
+               - If the variable is listed under "Options already defined in other add-ons" below, copy its default, schema,
+                 name and description EXACTLY, so every add-on uses the same wording.
+               - Otherwise follow the style of the existing descriptions: for a 0/1 flag start with "When set to 1, ...".
+                 The first sentence must say what the option does (it is copied into the CHANGELOG), then requirements
+                 (e.g. secure connection), then limitations (VNC clients, HA Ingress) when they apply.
+            4. If there is nothing new, change nothing.
 
-            IMPORTANT: There may be MULTIPLE upstream releases between our tracked version (${{ needs.check-upstream.outputs.tracked_version }}) and the latest (${{ needs.check-upstream.outputs.latest_tag }}).
-            You MUST fetch and include release notes for ALL intermediate versions, not just the latest one.
+            Finish with a short summary of the options you added, or say that there were none.
 
-            1. Fetch the list of all releases: https://api.github.com/repos/jlesage/docker-firefox/releases?per_page=20
-            2. Parse the JSON array and identify ALL releases that are NEWER than ${{ needs.check-upstream.outputs.tracked_version }} (up to and including ${{ needs.check-upstream.outputs.latest_tag }})
-            3. For each intermediate release, extract the "tag_name" and "body" fields
-            4. You MUST include the changes from ALL intermediate releases in the changelog entries later, not just the latest one
-            5. If a release contains significant Firefox-specific changes (not just baseimage updates), note this for version bumping decisions
+            ## Options already defined in other add-ons but missing here
 
-            ## Step 2: Check upstream changes for new environment variables
-
-            Fetch and review the upstream README to check for any new environment variables:
-            - Fetch https://raw.githubusercontent.com/jlesage/docker-firefox/master/README.md
-            - Look at the "Environment Variables" section
-            - Compare with the current environment variables in firefox/DOCS.md and firefox/config.yaml
-
-            ## Step 3: Update files
-
-            1. **firefox/build.yaml**: Update the build_from image tags to use ${{ needs.check-upstream.outputs.latest_tag }}
-
-            2. **firefox/config.yaml**:
-              - Bump the `version` field to the new add-on version. This is the version that Home Assistant advertises to users, and the builder tags the published image with it, so it must be set here in this PR.
-              - Determine the new version following these rules:
-                - PATCH version (e.g., 1.9.0 → 1.9.1): for upstream updates that only contain baseimage changes
-                - MINOR version (e.g., 1.9.0 → 1.10.0): when new environment variables are added OR the upstream release contains Firefox-specific changes
-              - If there are NEW environment variables in upstream that are not yet in the addon, add them to the `schema` and `options` sections following the existing pattern
-
-            3. **firefox/DOCS.md**:
-               - If there are NEW environment variables, add them to the Configuration section following the existing table format and descriptions
-
-            4. **firefox/translations/en.yaml** (and other translation files in firefox/translations/):
-               - If there are NEW environment variables, add their name and description translations following the existing pattern
-               - Check the structure of existing entries and replicate it for new variables
-
-            5. **firefox/CHANGELOG.md**:
-               - Add a new entry documenting the upstream update
-               - IMPORTANT: Include the changes from ALL intermediate upstream releases you fetched in Step 1 (from ${{ needs.check-upstream.outputs.tracked_version }} to ${{ needs.check-upstream.outputs.latest_tag }}), not just the latest release
-               - Format: "Base image update: jlesage/docker-firefox to ${{ needs.check-upstream.outputs.latest_tag }}" followed by the combined upstream changes from all intermediate releases
-               - Look at previous changelog entries (e.g., 1.7.0, 1.8.0) to see how upstream changes are formatted
-               - If new environment variables were added, mention them in the changelog
-
-            6. **.upstream-version-firefox**: Update to ${{ needs.check-upstream.outputs.latest_tag }}
-
-            7. Check **firefox_edge/** folder for similar updates if needed (build.yaml, config.yaml — including its own `version` bump, translations/, DOCS.md, CHANGELOG.md)
-
-            ## Important
-
-            - Look at the git history and existing file formats to follow the same patterns
-            - For new environment variables, follow the naming convention and structure used in previous commits
-            - Only add environment variables that make sense for Home Assistant users
-            - Make sure translations are consistent across all translation files
-            - Provide a summary of what was changed, especially if new environment variables were added
-
+            ${{ steps.prepare.outputs.known }}
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Commit and Push changes
-        id: commit
-        if: steps.pr_check.outputs.skip != 'true'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Generate the update
+        if: steps.check.outputs.should_update == 'true'
         run: |
-          VERSION="${{ needs.check-upstream.outputs.latest_tag }}"
-          BRANCH_NAME="${{ needs.check-upstream.outputs.branch_name }}"
+          EXTRA_ARGS=()
+          [ -n "$EXTRA" ] && EXTRA_ARGS=(--extra "$EXTRA")
+          python3 .github/scripts/upstream_sync.py apply \
+            --addon "$ADDON" "${EXTRA_ARGS[@]}" \
+            --app "$APP" \
+            --repo "$UPSTREAM" \
+            --tracked "${{ steps.check.outputs.tracked }}" \
+            --latest "${{ steps.check.outputs.latest }}" \
+            --version-file "$VERSION_FILE" \
+            --base-sha "${{ steps.prepare.outputs.base_sha }}" \
+            --out-dir "$RUNNER_TEMP/upstream-sync"
 
-          if [ -z "$(git status --porcelain)" ]; then
-            echo "No changes detected"
-            echo "changes_made=false" >> $GITHUB_OUTPUT
-            exit 0
-          fi
+          {
+            echo "## $ADDON: ${{ steps.check.outputs.tracked }} → ${{ steps.check.outputs.latest }}"
+            echo
+            cat "$RUNNER_TEMP/upstream-sync/pr-body.md"
+            echo
+            echo '<details><summary>Diff</summary>'
+            echo
+            echo '```diff'
+            git diff
+            echo '```'
+            echo
+            echo '</details>'
+          } >> "$GITHUB_STEP_SUMMARY"
 
-          # Remove any output.txt that Claude might have created
-          rm -f output.txt
-
+      - name: Commit, push and open the PR
+        if: steps.check.outputs.should_update == 'true' && env.DRY_RUN != 'true'
+        env:
+          LATEST: ${{ steps.check.outputs.latest }}
+          BRANCH: ${{ steps.check.outputs.branch }}
+          TITLE: ${{ steps.check.outputs.title }}
+        run: |
           git add -A
-          git commit -m "chore: update to upstream docker-firefox $VERSION"
+          git commit -m "chore: update to upstream ${UPSTREAM#*/} $LATEST"
+          # The branch only belongs to this workflow and has no open PR (checked above).
+          git push --force origin "$BRANCH"
 
-          # Set up authenticated remote URL
-          git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git"
-          git push origin "$BRANCH_NAME"
-
-          echo "changes_made=true" >> $GITHUB_OUTPUT
-
-      - name: Create Pull Request
-        id: create_pr
-        if: steps.pr_check.outputs.skip != 'true' && steps.commit.outputs.changes_made == 'true'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          VERSION="${{ needs.check-upstream.outputs.latest_tag }}"
-          BRANCH_NAME="${{ needs.check-upstream.outputs.branch_name }}"
-
-          TRACKED="${{ needs.check-upstream.outputs.tracked_version }}"
-
-          PR_URL=$(gh pr create \
-            --title "🔄 Update to jlesage/docker-firefox $VERSION" \
-            --body "## Automated Upstream Sync
-
-          **New upstream release:** [\`$VERSION\`](https://github.com/jlesage/docker-firefox/releases/tag/$VERSION)
-          **Previous tracked version:** \`$TRACKED\`
-
-          This PR updates the Firefox Home Assistant add-on to use the latest upstream Docker image.
-          All intermediate releases between \`$TRACKED\` and \`$VERSION\` are included in the changelog.
-
-          ### Checklist
-          - [ ] Review the changes in \`firefox/\` folder
-          - [ ] Check CHANGELOG.md entry covers all intermediate releases
-          - [ ] Verify new environment variables (if any)
-
-          ---
-          *Created automatically by Claude Code*" \
-            --base main \
-            --head "$BRANCH_NAME")
-
-          # Extract PR number from URL
-          PR_NUMBER=$(echo "$PR_URL" | grep -oE '[0-9]+$')
-          echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
+          PR_URL=$(gh pr create --title "$TITLE" --body-file "$RUNNER_TEMP/upstream-sync/pr-body.md" \
+            --base "${{ github.event.repository.default_branch }}" --head "$BRANCH")
+          PR_NUMBER=${PR_URL##*/}
           echo "Created PR #$PR_NUMBER"
+
+          # Close older update PRs for the same upstream: this one includes their releases.
+          gh pr list --state open --limit 100 --json number,title \
+            --jq ".[] | select(.title | startswith(\"🔄 Update to $UPSTREAM \")) | select(.number != $PR_NUMBER) | .number" |
+          while read -r OLD; do
+            gh pr close "$OLD" --comment "Superseded by #$PR_NUMBER ($UPSTREAM $LATEST), which includes this release."
+          done
