@@ -2,22 +2,27 @@
 
 ## 1.8.0
 
-- Base image update: jlesage/docker-chromium to v26.11.4.
-  - Updated Chromium to version 158.0.8127.36-r0.
-  - Updated baseimage to version 4.15.1, bringing the following changes:
-    - Added web microphone support.
-    - Added H.264 encoding support for a moving screen in the web interface.
-    - Web audio sample rate is now 48000 Hz.
-    - Web audio now skips near-silence.
-    - The web interface now shows the browser's own mouse pointer.
-    - Improved responsiveness of screen updates in the web interface.
-    - Fixed one-pixel border showing above the main application window.
-    - Fixed main window un-maximizing on Alt+drag.
-    - Fixed web audio staying off after the web interface reconnects.
-    - Fixed idle JPEG refresh delaying the next interaction.
-    - Fixed issue that could affect application window display.
-- New option `WEB_MICROPHONE` (default `0`) to enable web microphone support.
-  Requires secure web access (HTTPS).
+- Base image update: jlesage/docker-chromium to v26.11.4
+  - v26.11.4:
+    - Updated baseimage to version 4.15.1:
+      - Fixed issue that could affect application window display.
+  - v26.11.3:
+    - Updated baseimage to version 4.15.0:
+      - Added web microphone support.
+      - Added H.264 encoding support for a moving screen in the web interface.
+      - Web audio sample rate is now 48000 Hz.
+      - Web audio now skips near-silence.
+      - The web interface now shows the browser's own mouse pointer.
+      - Improved responsiveness of screen updates in the web interface.
+      - Fixed one-pixel border showing above the main application window.
+      - Fixed main window un-maximizing on Alt+drag.
+      - Fixed web audio staying off after the web interface reconnects.
+      - Fixed idle JPEG refresh delaying the next interaction.
+  - v26.11.2:
+    - Updated Chromium to version 158.0.8127.36-r0.
+- Added new environment variable:
+  - WEB_MICROPHONE: When set to 1, microphone support is enabled, allowing audio
+    captured by the browser to be used by the application.
 
 ## 1.7.0
 
