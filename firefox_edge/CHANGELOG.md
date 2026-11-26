@@ -1,5 +1,22 @@
 <!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 
+## 1.14.1
+
+- Base image update: jlesage/docker-firefox to v26.11.3
+  - Updated baseimage to version 4.15.1:
+    - Fixed issue that could affect application window display.
+  - Updated baseimage to version 4.15.0 (v26.11.2):
+    - Added web microphone support.
+    - Added H.264 encoding support for a moving screen in the web interface.
+    - Web audio sample rate is now 48000 Hz.
+    - Web audio now skips near-silence.
+    - The web interface now shows the browser's own mouse pointer.
+    - Improved responsiveness of screen updates in the web interface.
+    - Fixed one-pixel border showing above the main application window.
+    - Fixed main window un-maximizing on Alt+drag.
+    - Fixed web audio staying off after the web interface reconnects.
+    - Fixed idle JPEG refresh delaying the next interaction.
+
 ## 1.14.0
 
 - Reverted GPU hardware acceleration (`video: true`, added in 1.13.4): it brought
