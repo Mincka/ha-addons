@@ -50,6 +50,9 @@ configuration:
   WEB_AUDIO:
     name: Web Audio
     description: When set to 1, audio support is enabled, meaning that any audio produced by the application is played through the browser. Don't forget to also enable audio in the VNC docked console. Note that audio is not supported for VNC clients, nor HA Ingress. Please tell me if you find a way to make it work through HA ingress.
+  WEB_MICROPHONE:
+    name: Web Microphone
+    description: When set to 1, microphone support is enabled, allowing audio captured by the browser to be used by the application. Requires secure web access (SECURE_CONNECTION set to 1, HTTPS). Not supported for VNC clients.
   WEB_HOST_CLIPBOARD_SYNC:
     name: Web Host Clipboard Sync
     description: When set to 1, enables synchronizing the host system clipboard with the application when accessed via a web browser. Actual availability still depends on the browser (Chromium-based engines only) and requires a secure connection (HTTPS). Not available for VNC clients.

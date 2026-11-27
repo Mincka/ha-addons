@@ -1,5 +1,5 @@
 name: "Firefox"
-version: "1.14.0"
+version: "1.15.0"
 slug: "firefox"
 panel_icon: "mdi:firefox"
 description: Docker container for Firefox
@@ -46,6 +46,7 @@ options:
   SECURE_CONNECTION_VNC_METHOD: "SSL"
   SECURE_CONNECTION_CERTS_CHECK_INTERVAL: "60"
   WEB_AUDIO: "1"
+  WEB_MICROPHONE: "0"
   WEB_HOST_CLIPBOARD_SYNC: "1"
   WEB_AUTHENTICATION: "0"
   WEB_AUTHENTICATION_ALLOW_INSECURE: "0"
@@ -76,6 +77,7 @@ schema:
   SECURE_CONNECTION_VNC_METHOD: str
   SECURE_CONNECTION_CERTS_CHECK_INTERVAL: str
   WEB_AUDIO: str
+  WEB_MICROPHONE: str
   WEB_HOST_CLIPBOARD_SYNC: str
   WEB_AUTHENTICATION: str
   WEB_AUTHENTICATION_ALLOW_INSECURE: str
